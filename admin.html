@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lienzo Blanco — Panel de presupuestos</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,500&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#FBF8F2;
+  --paper-deep:#F2EBDC;
+  --ink:#211D18;
+  --ink-soft:#584F41;
+  --gold:#A9834A;
+  --gold-deep:#7C5E2E;
+  --gold-pale:#E7DAB9;
+  --serif:'Cormorant Garamond', Georgia, serif;
+  --sans:'Jost', Arial, sans-serif;
+  --ok:#3E7A4F;
+  --warn:#B3542A;
+}
+*{box-sizing:border-box;}
+body{margin:0; font-family:var(--sans); color:var(--ink); background:var(--paper); font-weight:300;}
+h1,h2,h3{font-family:var(--serif); font-weight:500; color:var(--ink); letter-spacing:0.01em; margin:0;}
+a{color:var(--gold-deep);}
+
+.login-screen{min-height:100vh; display:flex; align-items:center; justify-content:center; padding:20px;}
+.login-card{background:var(--paper-deep); border:1px solid var(--gold-pale); border-radius:6px; padding:40px 36px; width:100%; max-width:380px;}
+.login-card h1{font-size:1.8rem; margin-bottom:6px;}
+.login-card p{color:var(--ink-soft); font-size:0.9rem; margin:0 0 24px;}
+.field{margin-bottom:16px;}
+.field label{display:block; font-size:0.8rem; letter-spacing:0.04em; text-transform:uppercase; color:var(--ink-soft); margin-bottom:6px;}
+.field input{width:100%; padding:10px 12px; border:1px solid var(--gold-pale); border-radius:4px; background:var(--paper); font-family:var(--sans); font-size:0.95rem; color:var(--ink);}
+.field input:focus{outline:2px solid var(--gold-deep);}
+.btn{display:inline-block; border:1px solid var(--ink); background:var(--ink); color:var(--paper); padding:11px 20px; border-radius:4px; font-family:var(--sans); font-size:0.9rem; letter-spacing:0.03em; cursor:pointer; text-align:center;}
+.btn:hover{background:var(--gold-deep); border-color:var(--gold-deep);}
+.btn.secondary{background:transparent; color:var(--ink); border-color:var(--ink);}
+.btn.secondary:hover{background:var(--ink); color:var(--paper);}
+.btn.danger{background:transparent; color:var(--warn); border-color:var(--warn);}
+.btn.danger:hover{background:var(--warn); color:var(--paper);}
+.btn.small{padding:6px 12px; font-size:0.8rem;}
+.msg{font-size:0.85rem; margin-top:14px; min-height:1.2em;}
+.msg.err{color:var(--warn);}
+.msg.ok{color:var(--ok);}
+
+header.top{display:flex; align-items:center; justify-content:space-between; padding:18px 28px; border-bottom:1px solid var(--gold-pale); background:var(--paper-deep);}
+header.top h1{font-size:1.4rem;}
+header.top .who{font-size:0.85rem; color:var(--ink-soft);}
+
+main{max-width:1100px; margin:0 auto; padding:28px;}
+.toolbar{display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin-bottom:22px;}
+.toolbar select{padding:8px 10px; border:1px solid var(--gold-pale); border-radius:4px; background:var(--paper); font-family:var(--sans); color:var(--ink);}
+.count{font-size:0.85rem; color:var(--ink-soft); margin-left:auto;}
+
+.cards{display:flex; flex-direction:column; gap:14px;}
+.card{background:var(--paper-deep); border:1px solid var(--gold-pale); border-radius:6px; padding:20px 22px;}
+.card-top{display:flex; flex-wrap:wrap; justify-content:space-between; gap:10px; margin-bottom:10px;}
+.card-name{font-size:1.25rem;}
+.card-date{font-size:0.8rem; color:var(--ink-soft);}
+.badge{display:inline-block; font-size:0.72rem; letter-spacing:0.04em; text-transform:uppercase; padding:3px 10px; border-radius:20px; border:1px solid var(--gold-pale);}
+.badge.pendiente{color:var(--warn); border-color:var(--warn);}
+.badge.contactado{color:var(--ok); border-color:var(--ok);}
+.badge.descartado{color:var(--ink-soft); border-color:var(--ink-soft); text-decoration:line-through;}
+.card-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:8px 20px; font-size:0.9rem; margin-bottom:12px;}
+.card-grid div span{display:block; font-size:0.72rem; text-transform:uppercase; letter-spacing:0.04em; color:var(--ink-soft);}
+.card-message{background:var(--paper); border:1px solid var(--gold-pale); border-radius:4px; padding:10px 12px; font-size:0.9rem; color:var(--ink-soft); margin-bottom:14px; white-space:pre-wrap;}
+.card-actions{display:flex; flex-wrap:wrap; gap:8px;}
+.empty{text-align:center; padding:60px 20px; color:var(--ink-soft);}
+.loading{text-align:center; padding:60px 20px; color:var(--ink-soft);}
+</style>
+</head>
+<body>
+
+<div id="loginScreen" class="login-screen">
+  <div class="login-card">
+    <h1>Lienzo Blanco</h1>
+    <p>Panel de presupuestos — acceso privado.</p>
+    <form id="loginForm">
+      <div class="field">
+        <label for="loginEmail">Email</label>
+        <input type="email" id="loginEmail" autocomplete="username" required>
+      </div>
+      <div class="field">
+        <label for="loginPassword">Contraseña</label>
+        <input type="password" id="loginPassword" autocomplete="current-password" required>
+      </div>
+      <button type="submit" class="btn" style="width:100%;">Entrar</button>
+      <p class="msg" id="loginMsg"></p>
+    </form>
+  </div>
+</div>
+
+<div id="appScreen" style="display:none;">
+  <header class="top">
+    <h1>Presupuestos — Lienzo Blanco</h1>
+    <div style="display:flex; align-items:center; gap:16px;">
+      <span class="who" id="whoami"></span>
+      <button class="btn secondary small" id="logoutBtn">Salir</button>
+    </div>
+  </header>
+  <main>
+    <div class="toolbar">
+      <select id="statusFilter">
+        <option value="todos">Todos los estados</option>
+        <option value="pendiente">Pendiente</option>
+        <option value="contactado">Contactado</option>
+        <option value="descartado">Descartado</option>
+      </select>
+      <span class="count" id="countLabel"></span>
+    </div>
+    <div id="listArea" class="cards">
+      <div class="loading">Cargando presupuestos…</div>
+    </div>
+  </main>
+</div>
+
+<script type="module">
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
+const SUPABASE_URL = 'https://ztsdkfwnqrlmsirfvoat.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_bt-0G1I3KXlFfwskeMvJsQ_QS3_L-Dc';
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+const loginScreen = document.getElementById('loginScreen');
+const appScreen = document.getElementById('appScreen');
+const loginForm = document.getElementById('loginForm');
+const loginMsg = document.getElementById('loginMsg');
+const whoami = document.getElementById('whoami');
+const listArea = document.getElementById('listArea');
+const statusFilter = document.getElementById('statusFilter');
+const countLabel = document.getElementById('countLabel');
+
+let allQuotes = [];
+
+function waNumber(phone){
+  let digits = (phone || '').replace(/\D/g, '');
+  if (digits.startsWith('0034')) digits = digits.slice(2);
+  if (digits.length === 9) digits = '34' + digits;
+  return digits;
+}
+
+function fmtDate(iso){
+  if (!iso) return '';
+  const d = new Date(iso);
+  return d.toLocaleString('es-ES', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
+}
+
+function escapeHtml(s){
+  return (s ?? '').toString()
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function renderQuotes(){
+  const filter = statusFilter.value;
+  const rows = filter === 'todos' ? allQuotes : allQuotes.filter(q => q.status === filter);
+  countLabel.textContent = `${rows.length} presupuesto${rows.length === 1 ? '' : 's'}`;
+
+  if (!rows.length){
+    listArea.innerHTML = '<div class="empty">No hay presupuestos que mostrar.</div>';
+    return;
+  }
+
+  listArea.innerHTML = rows.map(q => {
+    const waText = `Hola ${q.name}, soy Beatriz de Lienzo Blanco. Gracias por tu solicitud de presupuesto` + (q.event_type ? ` para tu ${q.event_type.toLowerCase()}` : '') + '. ¿Hablamos?';
+    const waHref = q.phone ? `https://wa.me/${waNumber(q.phone)}?text=${encodeURIComponent(waText)}` : null;
+    return `
+    <div class="card" data-id="${q.id}">
+      <div class="card-top">
+        <span class="card-name">${escapeHtml(q.name)}</span>
+        <span class="badge ${q.status}">${q.status}</span>
+      </div>
+      <div class="card-date">${fmtDate(q.created_at)}</div>
+      <div class="card-grid" style="margin-top:10px;">
+        <div><span>Email</span><a href="mailto:${escapeHtml(q.email)}">${escapeHtml(q.email)}</a></div>
+        <div><span>Teléfono</span>${q.phone ? escapeHtml(q.phone) : '—'}</div>
+        <div><span>Tipo de evento</span>${q.event_type ? escapeHtml(q.event_type) : '—'}</div>
+        <div><span>Fecha del evento</span>${q.event_date ? escapeHtml(q.event_date) : '—'}</div>
+      </div>
+      ${q.message ? `<div class="card-message">${escapeHtml(q.message)}</div>` : ''}
+      <div class="card-actions">
+        ${waHref ? `<a class="btn small" href="${waHref}" target="_blank" rel="noopener">WhatsApp</a>` : ''}
+        <a class="btn secondary small" href="mailto:${escapeHtml(q.email)}">Email</a>
+        ${q.status !== 'contactado' ? `<button class="btn secondary small" data-action="status" data-status="contactado">Marcar contactado</button>` : ''}
+        ${q.status !== 'pendiente' ? `<button class="btn secondary small" data-action="status" data-status="pendiente">Marcar pendiente</button>` : ''}
+        ${q.status !== 'descartado' ? `<button class="btn secondary small" data-action="status" data-status="descartado">Descartar</button>` : ''}
+        <button class="btn danger small" data-action="delete">Eliminar</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function loadQuotes(){
+  listArea.innerHTML = '<div class="loading">Cargando presupuestos…</div>';
+  const { data, error } = await supabase
+    .from('presupuestos_lienzo_blanco')
+    .select('*')
+    .order('created_at', { ascending: false });
+  if (error){
+    listArea.innerHTML = `<div class="empty">Error al cargar: ${escapeHtml(error.message)}</div>`;
+    return;
+  }
+  allQuotes = data || [];
+  renderQuotes();
+}
+
+listArea.addEventListener('click', async (e) => {
+  const btn = e.target.closest('button[data-action]');
+  if (!btn) return;
+  const card = e.target.closest('.card');
+  const id = card.dataset.id;
+  const action = btn.dataset.action;
+
+  if (action === 'status'){
+    const status = btn.dataset.status;
+    btn.disabled = true;
+    const { error } = await supabase.from('presupuestos_lienzo_blanco').update({ status }).eq('id', id);
+    if (error){ alert('No se pudo actualizar: ' + error.message); btn.disabled = false; return; }
+    await loadQuotes();
+  }
+
+  if (action === 'delete'){
+    if (!confirm('¿Eliminar este presupuesto? No se puede deshacer.')) return;
+    btn.disabled = true;
+    const { error } = await supabase.from('presupuestos_lienzo_blanco').delete().eq('id', id);
+    if (error){ alert('No se pudo eliminar: ' + error.message); btn.disabled = false; return; }
+    await loadQuotes();
+  }
+});
+
+statusFilter.addEventListener('change', renderQuotes);
+
+loginForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  loginMsg.textContent = '';
+  loginMsg.className = 'msg';
+  const email = document.getElementById('loginEmail').value.trim();
+  const password = document.getElementById('loginPassword').value;
+  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  if (error){
+    loginMsg.textContent = 'No se pudo iniciar sesión: ' + error.message;
+    loginMsg.className = 'msg err';
+    return;
+  }
+});
+
+document.getElementById('logoutBtn').addEventListener('click', async () => {
+  await supabase.auth.signOut();
+});
+
+async function showApp(session){
+  loginScreen.style.display = 'none';
+  appScreen.style.display = 'block';
+  whoami.textContent = session.user.email;
+  await loadQuotes();
+}
+
+function showLogin(){
+  appScreen.style.display = 'none';
+  loginScreen.style.display = 'flex';
+}
+
+(async () => {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (session) await showApp(session);
+  else showLogin();
+
+  supabase.auth.onAuthStateChange((_event, session) => {
+    if (session) showApp(session);
+    else showLogin();
+  });
+})();
+</script>
+</body>
+</html>
