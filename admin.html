@@ -70,6 +70,27 @@ main{max-width:1100px; margin:0 auto; padding:28px;}
 .card-actions{display:flex; flex-wrap:wrap; gap:8px;}
 .empty{text-align:center; padding:60px 20px; color:var(--ink-soft);}
 .loading{text-align:center; padding:60px 20px; color:var(--ink-soft);}
+
+.tabs{display:flex; gap:8px; margin-bottom:22px; border-bottom:1px solid var(--gold-pale);}
+.tab-btn{background:none; border:none; font-family:var(--sans); font-size:0.95rem; color:var(--ink-soft); padding:10px 4px; cursor:pointer; border-bottom:2px solid transparent; margin-right:18px;}
+.tab-btn.active{color:var(--ink); border-bottom-color:var(--gold-deep);}
+.tab-panel{display:none;}
+.tab-panel.active{display:block;}
+
+.form-card{background:var(--paper-deep); border:1px solid var(--gold-pale); border-radius:6px; padding:22px 24px; margin-bottom:24px;}
+.form-card h2{font-size:1.2rem; margin-bottom:16px;}
+.form-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:14px;}
+.form-grid .field{margin-bottom:0;}
+.form-grid textarea{width:100%; padding:10px 12px; border:1px solid var(--gold-pale); border-radius:4px; background:var(--paper); font-family:var(--sans); font-size:0.95rem; color:var(--ink); resize:vertical; min-height:60px;}
+.form-grid select{width:100%; padding:10px 12px; border:1px solid var(--gold-pale); border-radius:4px; background:var(--paper); font-family:var(--sans); font-size:0.95rem; color:var(--ink);}
+.field-checkbox{display:flex; align-items:center; gap:8px; margin-top:26px;}
+.form-actions{display:flex; gap:10px; margin-top:18px; align-items:center;}
+
+.prov-card{background:var(--paper-deep); border:1px solid var(--gold-pale); border-radius:6px; padding:18px 20px;}
+.prov-card.inactive{opacity:0.55;}
+.prov-top{display:flex; flex-wrap:wrap; justify-content:space-between; gap:10px; margin-bottom:6px;}
+.prov-name{font-size:1.15rem;}
+.prov-cat{font-size:0.72rem; letter-spacing:0.04em; text-transform:uppercase; color:var(--gold-deep);}
 </style>
 </head>
 <body>
@@ -95,24 +116,117 @@ main{max-width:1100px; margin:0 auto; padding:28px;}
 
 <div id="appScreen" style="display:none;">
   <header class="top">
-    <h1>Presupuestos — Lienzo Blanco</h1>
+    <h1>Panel — Lienzo Blanco</h1>
     <div style="display:flex; align-items:center; gap:16px;">
       <span class="who" id="whoami"></span>
       <button class="btn secondary small" id="logoutBtn">Salir</button>
     </div>
   </header>
   <main>
-    <div class="toolbar">
-      <select id="statusFilter">
-        <option value="todos">Todos los estados</option>
-        <option value="pendiente">Pendiente</option>
-        <option value="contactado">Contactado</option>
-        <option value="descartado">Descartado</option>
-      </select>
-      <span class="count" id="countLabel"></span>
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="quotes">Presupuestos</button>
+      <button class="tab-btn" data-tab="providers">Proveedores</button>
     </div>
-    <div id="listArea" class="cards">
-      <div class="loading">Cargando presupuestos…</div>
+
+    <div class="tab-panel active" id="tab-quotes">
+      <div class="toolbar">
+        <select id="statusFilter">
+          <option value="todos">Todos los estados</option>
+          <option value="pendiente">Pendiente</option>
+          <option value="contactado">Contactado</option>
+          <option value="descartado">Descartado</option>
+        </select>
+        <span class="count" id="countLabel"></span>
+      </div>
+      <div id="listArea" class="cards">
+        <div class="loading">Cargando presupuestos…</div>
+      </div>
+    </div>
+
+    <div class="tab-panel" id="tab-providers">
+      <div class="form-card">
+        <h2 id="provFormTitle">Añadir proveedor</h2>
+        <form id="providerForm">
+          <input type="hidden" id="prov-id">
+          <div class="form-grid">
+            <div class="field">
+              <label for="prov-name">Nombre / razón social</label>
+              <input type="text" id="prov-name" required>
+            </div>
+            <div class="field">
+              <label for="prov-cif">CIF / NIF</label>
+              <input type="text" id="prov-cif">
+            </div>
+            <div class="field">
+              <label for="prov-category">A qué se dedica</label>
+              <select id="prov-category" required>
+                <option value="">Selecciona una categoría…</option>
+                <option>Fincas y localizaciones</option>
+                <option>Catering y banquetes</option>
+                <option>Fotografía y vídeo</option>
+                <option>Música y espectáculos</option>
+                <option>Floristería y decoración</option>
+                <option>Papelería e invitaciones</option>
+                <option>Transporte y coches</option>
+                <option>Estilismo y belleza</option>
+                <option>Otros</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="prov-address">Dirección</label>
+              <input type="text" id="prov-address">
+            </div>
+            <div class="field">
+              <label for="prov-contact">Persona de contacto</label>
+              <input type="text" id="prov-contact">
+            </div>
+            <div class="field">
+              <label for="prov-phone">Teléfono</label>
+              <input type="text" id="prov-phone">
+            </div>
+            <div class="field">
+              <label for="prov-email">Email</label>
+              <input type="email" id="prov-email">
+            </div>
+            <div class="field">
+              <label for="prov-website">Web / Instagram</label>
+              <input type="text" id="prov-website" placeholder="https://…">
+            </div>
+            <div class="field" style="grid-column:1/-1;">
+              <label for="prov-notes">Notas (tarifas, condiciones, experiencia con ellos…)</label>
+              <textarea id="prov-notes"></textarea>
+            </div>
+            <div class="field-checkbox">
+              <input type="checkbox" id="prov-active" checked>
+              <label for="prov-active" style="margin:0; text-transform:none; font-size:0.9rem;">Proveedor activo</label>
+            </div>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn" id="provSubmitBtn">Guardar proveedor</button>
+            <button type="button" class="btn secondary" id="provCancelBtn" style="display:none;">Cancelar edición</button>
+            <p class="msg" id="provFormMsg" style="margin:0;"></p>
+          </div>
+        </form>
+      </div>
+
+      <div class="toolbar">
+        <select id="providerCategoryFilter">
+          <option value="todos">Todas las categorías</option>
+          <option>Fincas y localizaciones</option>
+          <option>Catering y banquetes</option>
+          <option>Fotografía y vídeo</option>
+          <option>Música y espectáculos</option>
+          <option>Floristería y decoración</option>
+          <option>Papelería e invitaciones</option>
+          <option>Transporte y coches</option>
+          <option>Estilismo y belleza</option>
+          <option>Otros</option>
+        </select>
+        <span class="count" id="providerCountLabel"></span>
+      </div>
+      <div id="providerListArea" class="cards">
+        <div class="loading">Cargando proveedores…</div>
+      </div>
     </div>
   </main>
 </div>
@@ -231,6 +345,167 @@ listArea.addEventListener('click', async (e) => {
 });
 
 statusFilter.addEventListener('change', renderQuotes);
+
+// ---- Tabs ----
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(`tab-${btn.dataset.tab}`).classList.add('active');
+    if (btn.dataset.tab === 'providers' && !providersLoaded) loadProviders();
+  });
+});
+
+// ---- Proveedores ----
+const providerForm = document.getElementById('providerForm');
+const providerListArea = document.getElementById('providerListArea');
+const providerCategoryFilter = document.getElementById('providerCategoryFilter');
+const providerCountLabel = document.getElementById('providerCountLabel');
+const provFormMsg = document.getElementById('provFormMsg');
+const provFormTitle = document.getElementById('provFormTitle');
+const provSubmitBtn = document.getElementById('provSubmitBtn');
+const provCancelBtn = document.getElementById('provCancelBtn');
+
+let allProviders = [];
+let providersLoaded = false;
+
+async function loadProviders(){
+  providerListArea.innerHTML = '<div class="loading">Cargando proveedores…</div>';
+  const { data, error } = await supabase
+    .from('proveedores_lienzo_blanco')
+    .select('*')
+    .order('name', { ascending: true });
+  providersLoaded = true;
+  if (error){
+    providerListArea.innerHTML = `<div class="empty">Error al cargar: ${escapeHtml(error.message)}</div>`;
+    return;
+  }
+  allProviders = data || [];
+  renderProviders();
+}
+
+function renderProviders(){
+  const filter = providerCategoryFilter.value;
+  const rows = filter === 'todos' ? allProviders : allProviders.filter(p => p.category === filter);
+  providerCountLabel.textContent = `${rows.length} proveedor${rows.length === 1 ? '' : 'es'}`;
+
+  if (!rows.length){
+    providerListArea.innerHTML = '<div class="empty">No hay proveedores que mostrar.</div>';
+    return;
+  }
+
+  providerListArea.innerHTML = rows.map(p => `
+    <div class="prov-card ${p.active ? '' : 'inactive'}" data-id="${p.id}">
+      <div class="prov-top">
+        <div>
+          <div class="prov-name">${escapeHtml(p.name)}${p.active ? '' : ' (inactivo)'}</div>
+          <div class="prov-cat">${escapeHtml(p.category)}</div>
+        </div>
+      </div>
+      <div class="card-grid" style="margin-top:8px;">
+        <div><span>CIF / NIF</span>${p.cif_nif ? escapeHtml(p.cif_nif) : '—'}</div>
+        <div><span>Dirección</span>${p.address ? escapeHtml(p.address) : '—'}</div>
+        <div><span>Contacto</span>${p.contact_person ? escapeHtml(p.contact_person) : '—'}</div>
+        <div><span>Teléfono</span>${p.phone ? escapeHtml(p.phone) : '—'}</div>
+        <div><span>Email</span>${p.email ? `<a href="mailto:${escapeHtml(p.email)}">${escapeHtml(p.email)}</a>` : '—'}</div>
+        <div><span>Web</span>${p.website ? `<a href="${escapeHtml(p.website)}" target="_blank" rel="noopener">${escapeHtml(p.website)}</a>` : '—'}</div>
+      </div>
+      ${p.notes ? `<div class="card-message">${escapeHtml(p.notes)}</div>` : ''}
+      <div class="card-actions">
+        <button class="btn secondary small" data-action="edit">Editar</button>
+        <button class="btn danger small" data-action="delete">Eliminar</button>
+      </div>
+    </div>`).join('');
+}
+
+function fillProviderForm(p){
+  document.getElementById('prov-id').value = p.id;
+  document.getElementById('prov-name').value = p.name || '';
+  document.getElementById('prov-cif').value = p.cif_nif || '';
+  document.getElementById('prov-category').value = p.category || '';
+  document.getElementById('prov-address').value = p.address || '';
+  document.getElementById('prov-contact').value = p.contact_person || '';
+  document.getElementById('prov-phone').value = p.phone || '';
+  document.getElementById('prov-email').value = p.email || '';
+  document.getElementById('prov-website').value = p.website || '';
+  document.getElementById('prov-notes').value = p.notes || '';
+  document.getElementById('prov-active').checked = !!p.active;
+  provFormTitle.textContent = `Editar proveedor — ${p.name}`;
+  provSubmitBtn.textContent = 'Guardar cambios';
+  provCancelBtn.style.display = 'inline-block';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function resetProviderForm(){
+  providerForm.reset();
+  document.getElementById('prov-id').value = '';
+  document.getElementById('prov-active').checked = true;
+  provFormTitle.textContent = 'Añadir proveedor';
+  provSubmitBtn.textContent = 'Guardar proveedor';
+  provCancelBtn.style.display = 'none';
+}
+
+provCancelBtn.addEventListener('click', resetProviderForm);
+
+providerForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  provFormMsg.textContent = '';
+  provFormMsg.className = 'msg';
+
+  const id = document.getElementById('prov-id').value;
+  const payload = {
+    name: document.getElementById('prov-name').value.trim(),
+    cif_nif: document.getElementById('prov-cif').value.trim() || null,
+    category: document.getElementById('prov-category').value,
+    address: document.getElementById('prov-address').value.trim() || null,
+    contact_person: document.getElementById('prov-contact').value.trim() || null,
+    phone: document.getElementById('prov-phone').value.trim() || null,
+    email: document.getElementById('prov-email').value.trim() || null,
+    website: document.getElementById('prov-website').value.trim() || null,
+    notes: document.getElementById('prov-notes').value.trim() || null,
+    active: document.getElementById('prov-active').checked,
+  };
+
+  provSubmitBtn.disabled = true;
+  const { error } = id
+    ? await supabase.from('proveedores_lienzo_blanco').update(payload).eq('id', id)
+    : await supabase.from('proveedores_lienzo_blanco').insert([payload]);
+  provSubmitBtn.disabled = false;
+
+  if (error){
+    provFormMsg.textContent = 'No se pudo guardar: ' + error.message;
+    provFormMsg.className = 'msg err';
+    return;
+  }
+  provFormMsg.textContent = 'Guardado correctamente.';
+  provFormMsg.className = 'msg ok';
+  resetProviderForm();
+  await loadProviders();
+});
+
+providerListArea.addEventListener('click', async (e) => {
+  const btn = e.target.closest('button[data-action]');
+  if (!btn) return;
+  const card = e.target.closest('.prov-card');
+  const id = card.dataset.id;
+  const action = btn.dataset.action;
+
+  if (action === 'edit'){
+    const p = allProviders.find(x => x.id === id);
+    if (p) fillProviderForm(p);
+  }
+
+  if (action === 'delete'){
+    if (!confirm('¿Eliminar este proveedor? No se puede deshacer.')) return;
+    btn.disabled = true;
+    const { error } = await supabase.from('proveedores_lienzo_blanco').delete().eq('id', id);
+    if (error){ alert('No se pudo eliminar: ' + error.message); btn.disabled = false; return; }
+    await loadProviders();
+  }
+});
+
+providerCategoryFilter.addEventListener('change', renderProviders);
 
 loginForm.addEventListener('submit', async (e) => {
   e.preventDefault();
