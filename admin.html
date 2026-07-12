@@ -108,6 +108,10 @@ main{max-width:1100px; margin:0 auto; padding:28px;}
         <label for="loginPassword">Contraseña</label>
         <input type="password" id="loginPassword" autocomplete="current-password" required>
       </div>
+      <div class="field-checkbox" style="margin-top:0; margin-bottom:18px;">
+        <input type="checkbox" id="rememberMe" checked>
+        <label for="rememberMe" style="margin:0; text-transform:none; font-size:0.9rem;">Recordar sesión en este dispositivo</label>
+      </div>
       <button type="submit" class="btn" style="width:100%;">Entrar</button>
       <p class="msg" id="loginMsg"></p>
     </form>
@@ -236,7 +240,28 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const SUPABASE_URL = 'https://ztsdkfwnqrlmsirfvoat.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_bt-0G1I3KXlFfwskeMvJsQ_QS3_L-Dc';
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// "Recordar sesión": si está marcado, la sesión se guarda en localStorage
+// (sobrevive a cerrar el navegador); si no, en sessionStorage (se olvida
+// al cerrar la pestaña/navegador).
+const REMEMBER_KEY = 'lb_admin_remember';
+const rememberStorage = {
+  getItem: (key) => localStorage.getItem(key) ?? sessionStorage.getItem(key),
+  setItem: (key, value) => {
+    if (localStorage.getItem(REMEMBER_KEY) === '0') {
+      sessionStorage.setItem(key, value);
+      localStorage.removeItem(key);
+    } else {
+      localStorage.setItem(key, value);
+      sessionStorage.removeItem(key);
+    }
+  },
+  removeItem: (key) => { localStorage.removeItem(key); sessionStorage.removeItem(key); },
+};
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+  auth: { storage: rememberStorage, persistSession: true, autoRefreshToken: true },
+});
 
 const loginScreen = document.getElementById('loginScreen');
 const appScreen = document.getElementById('appScreen');
@@ -511,6 +536,8 @@ loginForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   loginMsg.textContent = '';
   loginMsg.className = 'msg';
+  const remember = document.getElementById('rememberMe').checked;
+  localStorage.setItem(REMEMBER_KEY, remember ? '1' : '0');
   const email = document.getElementById('loginEmail').value.trim();
   const password = document.getElementById('loginPassword').value;
   const { error } = await supabase.auth.signInWithPassword({ email, password });
