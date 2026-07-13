@@ -5,7 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Lienzo Blanco — Panel de presupuestos</title>
 <meta name="robots" content="noindex, nofollow">
-<link rel="icon" href="data:,">
+<link rel="icon" href="assets/icon-192.png">
+<link rel="manifest" href="admin-manifest.webmanifest">
+<link rel="apple-touch-icon" href="assets/icon-192.png">
+<meta name="theme-color" content="#211D18">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,500&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -99,6 +102,19 @@ main{max-width:1100px; margin:0 auto; padding:28px;}
 .gallery-item-section{font-size:0.7rem; letter-spacing:0.04em; text-transform:uppercase; color:var(--gold-deep); margin-bottom:4px;}
 .gallery-item-caption{font-size:0.85rem; color:var(--ink-soft); margin-bottom:8px; min-height:1.2em;}
 .file-input{width:100%; padding:9px 10px; border:1px solid var(--gold-pale); border-radius:4px; background:var(--paper); font-family:var(--sans); font-size:0.9rem;}
+
+.agenda-item{background:var(--paper-deep); border:1px solid var(--gold-pale); border-radius:6px; padding:16px 20px; display:flex; flex-wrap:wrap; align-items:center; gap:14px;}
+.agenda-item.hecha{opacity:0.55;}
+.agenda-item.cancelada{opacity:0.45; text-decoration:line-through;}
+.agenda-time{font-family:var(--serif); font-size:1.3rem; min-width:64px;}
+.agenda-body{flex:1; min-width:180px;}
+.agenda-person{font-size:1.02rem;}
+.agenda-type{font-size:0.72rem; letter-spacing:0.04em; text-transform:uppercase; color:var(--gold-deep);}
+.agenda-notes{font-size:0.85rem; color:var(--ink-soft); margin-top:4px;}
+.agenda-date-heading{font-family:var(--serif); font-size:1.1rem; margin:22px 0 10px;}
+.agenda-date-heading:first-child{margin-top:0;}
+.notif-banner{display:flex; flex-wrap:wrap; align-items:center; gap:12px; background:var(--paper-deep); border:1px solid var(--gold-pale); border-radius:6px; padding:14px 18px; margin-bottom:22px;}
+.notif-banner p{margin:0; font-size:0.88rem; color:var(--ink-soft); flex:1; min-width:200px;}
 </style>
 </head>
 <body>
@@ -139,6 +155,13 @@ main{max-width:1100px; margin:0 auto; padding:28px;}
       <button class="tab-btn active" data-tab="quotes">Presupuestos</button>
       <button class="tab-btn" data-tab="providers">Proveedores</button>
       <button class="tab-btn" data-tab="gallery">Galería</button>
+      <button class="tab-btn" data-tab="agenda">Agenda</button>
+    </div>
+
+    <div class="notif-banner" id="notifBanner" hidden>
+      <p>Activa las notificaciones para recibir cada mañana a las 8:00 un aviso con las citas del día.</p>
+      <button class="btn secondary small" id="enableNotifBtn">Activar notificaciones</button>
+      <span class="msg" id="notifMsg" style="margin:0;"></span>
     </div>
 
     <div class="tab-panel active" id="tab-quotes">
@@ -292,6 +315,58 @@ main{max-width:1100px; margin:0 auto; padding:28px;}
         <div class="loading">Cargando imágenes…</div>
       </div>
     </div>
+
+    <div class="tab-panel" id="tab-agenda">
+      <div class="form-card">
+        <h2 id="agendaFormTitle">Añadir cita</h2>
+        <form id="agendaForm">
+          <input type="hidden" id="agenda-id">
+          <div class="form-grid">
+            <div class="field">
+              <label for="agenda-person">Nombre</label>
+              <input type="text" id="agenda-person" required placeholder="Nombre del cliente o proveedor">
+            </div>
+            <div class="field">
+              <label for="agenda-type">Tipo</label>
+              <select id="agenda-type" required>
+                <option value="cliente">Cliente</option>
+                <option value="proveedor">Proveedor</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="agenda-date">Fecha</label>
+              <input type="date" id="agenda-date" required>
+            </div>
+            <div class="field">
+              <label for="agenda-time">Hora (opcional)</label>
+              <input type="time" id="agenda-time">
+            </div>
+            <div class="field" style="grid-column:1/-1;">
+              <label for="agenda-notes">Notas (opcional)</label>
+              <textarea id="agenda-notes" placeholder="Dónde quedáis, qué hay que llevar, temas a tratar…"></textarea>
+            </div>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn" id="agendaSubmitBtn">Guardar cita</button>
+            <button type="button" class="btn secondary" id="agendaCancelBtn" style="display:none;">Cancelar edición</button>
+            <p class="msg" id="agendaFormMsg" style="margin:0;"></p>
+          </div>
+        </form>
+      </div>
+
+      <div class="toolbar">
+        <select id="agendaFilter">
+          <option value="proximas">Próximas citas</option>
+          <option value="todas">Todas</option>
+          <option value="hecha">Hechas</option>
+          <option value="cancelada">Canceladas</option>
+        </select>
+        <span class="count" id="agendaCountLabel"></span>
+      </div>
+      <div id="agendaListArea" class="cards">
+        <div class="loading">Cargando agenda…</div>
+      </div>
+    </div>
   </main>
 </div>
 
@@ -440,6 +515,7 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     document.getElementById(`tab-${btn.dataset.tab}`).classList.add('active');
     if (btn.dataset.tab === 'providers' && !providersLoaded) loadProviders();
     if (btn.dataset.tab === 'gallery' && !galleryLoaded) loadGalleryImages();
+    if (btn.dataset.tab === 'agenda' && !agendaLoaded) loadAgenda();
   });
 });
 
@@ -721,6 +797,249 @@ galleryListArea.addEventListener('click', async (e) => {
 
 gallerySectionFilter.addEventListener('change', renderGalleryImages);
 
+// ---- Agenda ----
+const agendaForm = document.getElementById('agendaForm');
+const agendaFormMsg = document.getElementById('agendaFormMsg');
+const agendaFormTitle = document.getElementById('agendaFormTitle');
+const agendaSubmitBtn = document.getElementById('agendaSubmitBtn');
+const agendaCancelBtn = document.getElementById('agendaCancelBtn');
+const agendaListArea = document.getElementById('agendaListArea');
+const agendaFilter = document.getElementById('agendaFilter');
+const agendaCountLabel = document.getElementById('agendaCountLabel');
+
+let allAgenda = [];
+let agendaLoaded = false;
+
+function todayIso(){
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function fmtDateHeading(dateStr){
+  const [y,m,d] = dateStr.split('-').map(Number);
+  const dt = new Date(y, m-1, d);
+  const label = dt.toLocaleDateString('es-ES', { weekday:'long', day:'numeric', month:'long' });
+  return dateStr === todayIso() ? `Hoy — ${label}` : label.charAt(0).toUpperCase() + label.slice(1);
+}
+
+async function loadAgenda(){
+  agendaListArea.innerHTML = '<div class="loading">Cargando agenda…</div>';
+  const { data, error } = await supabase
+    .from('citas_lienzo_blanco')
+    .select('*')
+    .order('event_date', { ascending: true })
+    .order('event_time', { ascending: true, nullsFirst: false });
+  agendaLoaded = true;
+  if (error){
+    agendaListArea.innerHTML = `<div class="empty">Error al cargar: ${escapeHtml(error.message)}</div>`;
+    return;
+  }
+  allAgenda = data || [];
+  renderAgenda();
+}
+
+function renderAgenda(){
+  const filter = agendaFilter.value;
+  const today = todayIso();
+  let rows = allAgenda;
+  if (filter === 'proximas') rows = allAgenda.filter(c => c.status === 'pendiente' && c.event_date >= today);
+  else if (filter === 'hecha') rows = allAgenda.filter(c => c.status === 'hecha');
+  else if (filter === 'cancelada') rows = allAgenda.filter(c => c.status === 'cancelada');
+
+  agendaCountLabel.textContent = `${rows.length} cita${rows.length === 1 ? '' : 's'}`;
+
+  if (!rows.length){
+    agendaListArea.innerHTML = '<div class="empty">No hay citas que mostrar.</div>';
+    return;
+  }
+
+  let html = '';
+  let lastDate = null;
+  for (const c of rows){
+    if (c.event_date !== lastDate){
+      html += `<div class="agenda-date-heading">${fmtDateHeading(c.event_date)}</div>`;
+      lastDate = c.event_date;
+    }
+    html += `
+      <div class="agenda-item ${c.status}" data-id="${c.id}">
+        <div class="agenda-time">${c.event_time ? c.event_time.slice(0,5) : '—'}</div>
+        <div class="agenda-body">
+          <div class="agenda-person">${escapeHtml(c.person_name)}</div>
+          <div class="agenda-type">${c.person_type}</div>
+          ${c.notes ? `<div class="agenda-notes">${escapeHtml(c.notes)}</div>` : ''}
+        </div>
+        <div class="card-actions">
+          <button class="btn secondary small" data-action="edit">Editar</button>
+          ${c.status !== 'hecha' ? `<button class="btn secondary small" data-action="status" data-status="hecha">Marcar hecha</button>` : ''}
+          ${c.status !== 'pendiente' ? `<button class="btn secondary small" data-action="status" data-status="pendiente">Marcar pendiente</button>` : ''}
+          ${c.status !== 'cancelada' ? `<button class="btn secondary small" data-action="status" data-status="cancelada">Cancelar</button>` : ''}
+          <button class="btn danger small" data-action="delete">Eliminar</button>
+        </div>
+      </div>`;
+  }
+  agendaListArea.innerHTML = html;
+}
+
+function fillAgendaForm(c){
+  document.getElementById('agenda-id').value = c.id;
+  document.getElementById('agenda-person').value = c.person_name || '';
+  document.getElementById('agenda-type').value = c.person_type || 'cliente';
+  document.getElementById('agenda-date').value = c.event_date || '';
+  document.getElementById('agenda-time').value = c.event_time ? c.event_time.slice(0,5) : '';
+  document.getElementById('agenda-notes').value = c.notes || '';
+  agendaFormTitle.textContent = `Editar cita — ${c.person_name}`;
+  agendaSubmitBtn.textContent = 'Guardar cambios';
+  agendaCancelBtn.style.display = 'inline-block';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function resetAgendaForm(){
+  agendaForm.reset();
+  document.getElementById('agenda-id').value = '';
+  agendaFormTitle.textContent = 'Añadir cita';
+  agendaSubmitBtn.textContent = 'Guardar cita';
+  agendaCancelBtn.style.display = 'none';
+}
+
+agendaCancelBtn.addEventListener('click', resetAgendaForm);
+
+agendaForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  agendaFormMsg.textContent = '';
+  agendaFormMsg.className = 'msg';
+
+  const id = document.getElementById('agenda-id').value;
+  const payload = {
+    person_name: document.getElementById('agenda-person').value.trim(),
+    person_type: document.getElementById('agenda-type').value,
+    event_date: document.getElementById('agenda-date').value,
+    event_time: document.getElementById('agenda-time').value || null,
+    notes: document.getElementById('agenda-notes').value.trim() || null,
+  };
+  // si se edita la fecha/hora de una cita ya notificada, permite que vuelva a avisar
+  if (id) payload.reminder_sent_at = null;
+
+  agendaSubmitBtn.disabled = true;
+  const { error } = id
+    ? await supabase.from('citas_lienzo_blanco').update(payload).eq('id', id)
+    : await supabase.from('citas_lienzo_blanco').insert([payload]);
+  agendaSubmitBtn.disabled = false;
+
+  if (error){
+    agendaFormMsg.textContent = 'No se pudo guardar: ' + error.message;
+    agendaFormMsg.className = 'msg err';
+    return;
+  }
+  agendaFormMsg.textContent = 'Guardado correctamente.';
+  agendaFormMsg.className = 'msg ok';
+  resetAgendaForm();
+  await loadAgenda();
+});
+
+agendaListArea.addEventListener('click', async (e) => {
+  const btn = e.target.closest('button[data-action]');
+  if (!btn) return;
+  const item = e.target.closest('.agenda-item');
+  const id = item.dataset.id;
+  const action = btn.dataset.action;
+
+  if (action === 'edit'){
+    const c = allAgenda.find(x => x.id === id);
+    if (c) fillAgendaForm(c);
+  }
+
+  if (action === 'status'){
+    const status = btn.dataset.status;
+    btn.disabled = true;
+    const { error } = await supabase.from('citas_lienzo_blanco').update({ status }).eq('id', id);
+    if (error){ alert('No se pudo actualizar: ' + error.message); btn.disabled = false; return; }
+    await loadAgenda();
+  }
+
+  if (action === 'delete'){
+    if (!confirm('¿Eliminar esta cita? No se puede deshacer.')) return;
+    btn.disabled = true;
+    const { error } = await supabase.from('citas_lienzo_blanco').delete().eq('id', id);
+    if (error){ alert('No se pudo eliminar: ' + error.message); btn.disabled = false; return; }
+    await loadAgenda();
+  }
+});
+
+agendaFilter.addEventListener('change', renderAgenda);
+
+// ---- Notificaciones push (agenda diaria a las 8:00) ----
+const VAPID_PUBLIC_KEY = 'BI2DB0JYsl3IMvs-P7LxCKa5K1niBnsxzC0_vn3DCogMIb7DeTaNVsq54k-jWZTReIHPeaaL9pfvlSpl1J0TDcQ';
+const notifBanner = document.getElementById('notifBanner');
+const notifMsg = document.getElementById('notifMsg');
+const enableNotifBtn = document.getElementById('enableNotifBtn');
+
+let swRegistration = null;
+if ('serviceWorker' in navigator){
+  window.addEventListener('load', async () => {
+    try { swRegistration = await navigator.serviceWorker.register('./sw-admin.js'); }
+    catch { swRegistration = null; }
+  });
+}
+
+function urlBase64ToUint8Array(base64String){
+  const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const rawData = atob(base64);
+  return Uint8Array.from([...rawData].map(c => c.charCodeAt(0)));
+}
+
+async function checkNotifBanner(){
+  if (!('Notification' in window) || !('serviceWorker' in navigator) || !('PushManager' in window)){
+    notifBanner.hidden = true;
+    return;
+  }
+  if (!swRegistration){
+    try { swRegistration = await navigator.serviceWorker.ready; } catch { /* noop */ }
+  }
+  if (Notification.permission === 'granted' && swRegistration){
+    const existing = await swRegistration.pushManager.getSubscription();
+    notifBanner.hidden = !!existing;
+  } else {
+    notifBanner.hidden = Notification.permission === 'denied';
+  }
+}
+
+enableNotifBtn.addEventListener('click', async () => {
+  notifMsg.textContent = '';
+  if (!swRegistration){
+    try { swRegistration = await navigator.serviceWorker.ready; } catch { /* noop */ }
+  }
+  if (!swRegistration){
+    notifMsg.textContent = 'No se ha podido activar: el navegador no admite notificaciones aquí.';
+    return;
+  }
+  const permission = await Notification.requestPermission();
+  if (permission !== 'granted'){
+    notifMsg.textContent = 'No se han activado las notificaciones.';
+    return;
+  }
+  try {
+    const subscription = await swRegistration.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+    });
+    const json = subscription.toJSON();
+    const { error } = await supabase.from('push_subscriptions_lienzo_blanco').insert({
+      endpoint: json.endpoint,
+      p256dh: json.keys.p256dh,
+      auth: json.keys.auth,
+    });
+    if (error && error.code !== '23505'){
+      notifMsg.textContent = 'No se ha podido guardar la suscripción: ' + error.message;
+      return;
+    }
+    notifMsg.textContent = 'Notificaciones activadas en este dispositivo ✅';
+    await checkNotifBanner();
+  } catch (err){
+    notifMsg.textContent = 'No se ha podido activar la notificación: ' + err.message;
+  }
+});
+
 loginForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   loginMsg.textContent = '';
@@ -746,6 +1065,7 @@ async function showApp(session){
   appScreen.style.display = 'block';
   whoami.textContent = session.user.email;
   await loadQuotes();
+  await checkNotifBanner();
 }
 
 function showLogin(){
