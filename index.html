@@ -355,6 +355,43 @@ footer{
 .section-gallery img{width:100%; height:230px; object-fit:cover; display:block; transition:transform 0.5s ease;}
 .section-gallery a:hover img{transform:scale(1.04);}
 .section-gallery figcaption{padding:10px 4px 0; font-size:0.82rem; color:var(--ink-soft); text-align:center;}
+
+/* ============ COOKIES Y PRIVACIDAD ============ */
+.cookie-banner{
+  position:fixed; left:0; right:0; bottom:0; z-index:200;
+  background:var(--ink); color:var(--paper);
+  padding:18px 28px; display:flex; gap:20px; align-items:center; flex-wrap:wrap;
+  box-shadow:0 -6px 20px rgba(0,0,0,.18);
+}
+.cookie-banner p{flex:1 1 320px; font-size:13.5px; margin:0; color:#EFE5D8;}
+.cookie-banner a{color:var(--paper); text-decoration:underline;}
+.cookie-banner-actions{display:flex; gap:10px; flex-wrap:wrap;}
+.cookie-banner[hidden]{display:none;}
+.cookie-banner .btn-outline{border-color:var(--paper); color:var(--paper);}
+.cookie-banner .btn-outline:hover{background:var(--paper); color:var(--ink);}
+@media (max-width:600px){ .cookie-banner{flex-direction:column; align-items:stretch;} }
+
+.modal-overlay{
+  position:fixed; inset:0; background:rgba(33,29,24,.55); z-index:300;
+  display:flex; align-items:center; justify-content:center; padding:20px;
+}
+.modal-overlay[hidden]{display:none;}
+.modal-box{
+  background:var(--paper); max-width:640px; width:100%; max-height:90vh; overflow-y:auto;
+  padding:32px; position:relative; border-radius:4px;
+}
+.modal-box h3{font-size:1.3rem; margin-bottom:16px;}
+.modal-box p{color:var(--ink-soft); font-size:14.5px; margin:0 0 14px;}
+.modal-close{
+  position:absolute; top:16px; right:16px; background:none; border:none; cursor:pointer;
+  font-size:22px; line-height:1; color:var(--ink-soft); padding:4px;
+}
+.modal-close:hover{color:var(--ink);}
+.checkbox-row.privacy{display:flex; align-items:flex-start; gap:8px; margin:14px 0; font-size:13.5px; color:var(--ink-soft);}
+.checkbox-row.privacy input{margin-top:3px;}
+.checkbox-row.privacy label{text-transform:none;}
+.footer-legal{display:flex; flex-wrap:wrap; gap:6px 18px; justify-content:center; margin-top:10px;}
+.footer-legal a{color:inherit; text-decoration:underline;}
 </style>
 </head>
 <body>
@@ -729,6 +766,10 @@ footer{
         <label for="f-message">Cuéntanos tu idea</label>
         <textarea id="f-message" name="message" placeholder="Número de invitados, localización, estilo que imagináis..."></textarea>
       </div>
+      <div class="checkbox-row privacy">
+        <input type="checkbox" id="accepts_privacy" required>
+        <label for="accepts_privacy">He leído y acepto la <a href="#" id="privacyLink">política de privacidad</a>.</label>
+      </div>
       <button type="submit" class="submit-btn" id="submitBtn">Enviar solicitud</button>
       <p class="form-msg" id="formMsg"></p>
     </form>
@@ -768,12 +809,60 @@ footer{
       <span>© 2026 Lienzo Blanco — Beatriz Cabalgante</span>
       <span class="script" style="font-size:1.3rem; color:var(--gold-pale);">Tú lo imaginas, nosotros lo hacemos realidad</span>
     </div>
+    <div class="footer-legal">
+      <a href="#" id="legalLinkFooter">Aviso legal</a>
+      <a href="#" id="privacyLinkFooter">Política de privacidad</a>
+      <a href="#" id="cookiesLinkFooter">Política de cookies</a>
+    </div>
   </div>
 </footer>
 
 <a class="wa-float" href="https://wa.me/34660376778" target="_blank" rel="noopener" aria-label="Contactar por WhatsApp">
   <svg viewBox="0 0 24 24"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.87.5 3.62 1.44 5.13L2 22l5.13-1.54a9.9 9.9 0 004.91 1.29h.01c5.46 0 9.91-4.45 9.91-9.91S17.5 2 12.04 2zm5.78 14.13c-.24.68-1.4 1.29-1.93 1.35-.53.06-1.02.09-1.66-.1-.38-.12-.87-.28-1.5-.55-2.65-1.14-4.38-3.8-4.51-3.97-.13-.17-1.08-1.43-1.08-2.73 0-1.3.68-1.94.92-2.2.24-.27.53-.34.7-.34.18 0 .35.002.5.01.16.008.38-.06.6.46.24.56.8 1.94.87 2.08.07.14.11.3.02.48-.09.18-.14.29-.28.45-.14.16-.29.36-.42.48-.14.13-.28.28-.12.55.16.27.72 1.19 1.55 1.93 1.06.95 1.96 1.24 2.23 1.38.27.14.43.12.59-.07.16-.19.68-.79.86-1.06.18-.27.36-.22.6-.13.24.09 1.53.72 1.79.85.26.13.43.19.5.3.06.11.06.65-.18 1.33z"/></svg>
 </a>
+
+<div class="modal-overlay" id="privacyModal" hidden>
+  <div class="modal-box">
+    <button type="button" class="modal-close" id="privacyClose" aria-label="Cerrar">×</button>
+    <h3>Política de privacidad</h3>
+    <p>En cumplimiento del Reglamento (UE) 2016/679 (RGPD) y la LOPDGDD, te informamos de que los datos personales que nos facilitas en el formulario de presupuesto (nombre, email, teléfono y, en su caso, el resto de datos que nos cuentes sobre tu evento) son tratados por <strong>Beatriz Cabalgante</strong>, bajo el nombre comercial <strong>Lienzo Blanco</strong>, con la única finalidad de gestionar tu solicitud de presupuesto y contactar contigo al respecto.</p>
+    <p>La base legal del tratamiento es tu consentimiento, prestado al marcar la casilla de aceptación y enviar el formulario.</p>
+    <p>Los datos se almacenan de forma segura en <strong>Supabase</strong>, que actúa como encargado del tratamiento, y no se ceden a terceros salvo obligación legal.</p>
+    <p>Conservaremos los datos mientras sea necesario para gestionar tu solicitud y, como máximo, durante los plazos legalmente exigidos.</p>
+    <p style="margin:0;">Puedes ejercer tus derechos de acceso, rectificación, supresión y oposición escribiendo a <a href="mailto:info@lienzoblanco.es">info@lienzoblanco.es</a> o por WhatsApp al <a href="https://wa.me/34660376778" target="_blank" rel="noopener">660 37 67 78</a>.</p>
+  </div>
+</div>
+
+<div class="modal-overlay" id="legalModal" hidden>
+  <div class="modal-box">
+    <button type="button" class="modal-close" id="legalClose" aria-label="Cerrar">×</button>
+    <h3>Aviso legal</h3>
+    <p>En cumplimiento del artículo 10 de la Ley 34/2002, de 11 de julio, de Servicios de la Sociedad de la Información y de Comercio Electrónico (LSSI-CE), se informa de los siguientes datos: Titular: <strong>Beatriz Cabalgante</strong> (Lienzo Blanco) — NIF: <strong>47497563X</strong> — Contacto: <a href="mailto:info@lienzoblanco.es">info@lienzoblanco.es</a> / <a href="https://wa.me/34660376778" target="_blank" rel="noopener">660 37 67 78</a> — Actividad: diseño, planificación y coordinación de bodas y celebraciones.</p>
+    <p>El presente aviso legal regula el acceso y uso del sitio web. El mero acceso implica la aceptación de estas condiciones; si no estás de acuerdo, debes abstenerte de utilizar el sitio.</p>
+    <p>Los contenidos del sitio (textos, imágenes, logotipo y diseño) son propiedad de <strong>Lienzo Blanco</strong> o se utilizan con la debida autorización, y están protegidos por la normativa de propiedad intelectual e industrial. No está permitida su reproducción o distribución sin autorización previa.</p>
+    <p><strong>Lienzo Blanco</strong> no se hace responsable de la disponibilidad continua del sitio web ni del contenido de los sitios de terceros a los que se enlaza (WhatsApp, redes sociales), sobre los que no tiene control.</p>
+    <p style="margin:0;">Este aviso legal se rige por la legislación española. Para el tratamiento de tus datos personales, consulta nuestra <a href="#" id="legalToPrivacyLink">política de privacidad</a>, y para las cookies, nuestra <a href="#" id="legalToCookiesLink">política de cookies</a>.</p>
+  </div>
+</div>
+
+<div class="modal-overlay" id="cookiesModal" hidden>
+  <div class="modal-box">
+    <button type="button" class="modal-close" id="cookiesClose" aria-label="Cerrar">×</button>
+    <h3>Política de cookies</h3>
+    <p>Esta web utiliza únicamente una cookie propia estrictamente necesaria para su funcionamiento: recordar tu decisión sobre este mismo aviso. No usamos cookies propias de análisis ni publicidad.</p>
+    <p>También cargamos las tipografías de la web desde <strong>Google Fonts</strong>, lo que implica una conexión de tu navegador a servidores de Google (con tu dirección IP), pero sin instalar cookies de seguimiento.</p>
+    <p>Puedes aceptar o rechazar las cookies no esenciales en el aviso que aparece al entrar en la web; ahora mismo el sitio no carga ningún recurso adicional aunque las rechaces. También puedes borrar las cookies ya instaladas y bloquear las futuras desde la configuración de tu navegador.</p>
+    <button type="button" class="btn btn-outline" id="reopenCookieBannerBtn">Cambiar mis preferencias de cookies</button>
+  </div>
+</div>
+
+<div class="cookie-banner" id="cookieBanner" hidden>
+  <p>Usamos una cookie propia necesaria para el funcionamiento de la web (recordar tu elección sobre este aviso). Más información en nuestra <a href="#" id="cookiePolicyLinkBanner">política de cookies</a>.</p>
+  <div class="cookie-banner-actions">
+    <button type="button" class="btn btn-outline" id="cookieRejectBtn">Rechazar no esenciales</button>
+    <button type="button" class="btn btn-primary" id="cookieAcceptBtn">Aceptar todas</button>
+  </div>
+</div>
 
 <script>
 /* ============ MOBILE NAV ============ */
@@ -787,6 +876,56 @@ navLinks.querySelectorAll('a').forEach(a => a.addEventListener('click', () => {
   navLinks.classList.remove('open');
   navToggle.setAttribute('aria-expanded', 'false');
 }));
+
+/* ============ COOKIES Y MODALES LEGALES ============ */
+const COOKIE_CONSENT_KEY = 'lb_cookie_consent';
+
+function initCookieConsent(){
+  const banner = document.getElementById('cookieBanner');
+  const consent = localStorage.getItem(COOKIE_CONSENT_KEY);
+
+  document.getElementById('cookieAcceptBtn').addEventListener('click', () => {
+    localStorage.setItem(COOKIE_CONSENT_KEY, 'accepted');
+    banner.hidden = true;
+  });
+  document.getElementById('cookieRejectBtn').addEventListener('click', () => {
+    localStorage.setItem(COOKIE_CONSENT_KEY, 'rejected');
+    banner.hidden = true;
+  });
+
+  const cookiesModal = document.getElementById('cookiesModal');
+  const openCookiesModal = (e) => { e.preventDefault(); cookiesModal.hidden = false; };
+  document.getElementById('cookiesLinkFooter').addEventListener('click', openCookiesModal);
+  document.getElementById('cookiePolicyLinkBanner').addEventListener('click', openCookiesModal);
+  document.getElementById('cookiesClose').addEventListener('click', () => { cookiesModal.hidden = true; });
+  cookiesModal.addEventListener('click', (e) => { if (e.target === cookiesModal) cookiesModal.hidden = true; });
+  document.getElementById('reopenCookieBannerBtn').addEventListener('click', () => {
+    cookiesModal.hidden = true;
+    banner.hidden = false;
+  });
+
+  if (!consent) banner.hidden = false;
+}
+initCookieConsent();
+
+const privacyModal = document.getElementById('privacyModal');
+const openPrivacyModal = (e) => { e.preventDefault(); privacyModal.hidden = false; };
+document.getElementById('privacyLink').addEventListener('click', openPrivacyModal);
+document.getElementById('privacyLinkFooter').addEventListener('click', openPrivacyModal);
+document.getElementById('privacyClose').addEventListener('click', () => { privacyModal.hidden = true; });
+privacyModal.addEventListener('click', (e) => { if (e.target === privacyModal) privacyModal.hidden = true; });
+
+const legalModal = document.getElementById('legalModal');
+const openLegalModal = (e) => { e.preventDefault(); legalModal.hidden = false; };
+document.getElementById('legalLinkFooter').addEventListener('click', openLegalModal);
+document.getElementById('legalClose').addEventListener('click', () => { legalModal.hidden = true; });
+legalModal.addEventListener('click', (e) => { if (e.target === legalModal) legalModal.hidden = true; });
+document.getElementById('legalToPrivacyLink').addEventListener('click', (e) => { legalModal.hidden = true; openPrivacyModal(e); });
+document.getElementById('legalToCookiesLink').addEventListener('click', (e) => {
+  legalModal.hidden = true;
+  e.preventDefault();
+  document.getElementById('cookiesModal').hidden = false;
+});
 
 /* ============ SCROLL REVEALS + PROCESS LINE + NODE HIGHLIGHT ============ */
 const revealEls = document.querySelectorAll('.reveal, .process-step');
