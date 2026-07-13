@@ -91,6 +91,14 @@ main{max-width:1100px; margin:0 auto; padding:28px;}
 .prov-top{display:flex; flex-wrap:wrap; justify-content:space-between; gap:10px; margin-bottom:6px;}
 .prov-name{font-size:1.15rem;}
 .prov-cat{font-size:0.72rem; letter-spacing:0.04em; text-transform:uppercase; color:var(--gold-deep);}
+
+.gallery-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:16px;}
+.gallery-item{background:var(--paper-deep); border:1px solid var(--gold-pale); border-radius:6px; overflow:hidden;}
+.gallery-item img{width:100%; height:150px; object-fit:cover; display:block; background:var(--paper);}
+.gallery-item-body{padding:10px 12px;}
+.gallery-item-section{font-size:0.7rem; letter-spacing:0.04em; text-transform:uppercase; color:var(--gold-deep); margin-bottom:4px;}
+.gallery-item-caption{font-size:0.85rem; color:var(--ink-soft); margin-bottom:8px; min-height:1.2em;}
+.file-input{width:100%; padding:9px 10px; border:1px solid var(--gold-pale); border-radius:4px; background:var(--paper); font-family:var(--sans); font-size:0.9rem;}
 </style>
 </head>
 <body>
@@ -130,6 +138,7 @@ main{max-width:1100px; margin:0 auto; padding:28px;}
     <div class="tabs">
       <button class="tab-btn active" data-tab="quotes">Presupuestos</button>
       <button class="tab-btn" data-tab="providers">Proveedores</button>
+      <button class="tab-btn" data-tab="gallery">Galería</button>
     </div>
 
     <div class="tab-panel active" id="tab-quotes">
@@ -230,6 +239,57 @@ main{max-width:1100px; margin:0 auto; padding:28px;}
       </div>
       <div id="providerListArea" class="cards">
         <div class="loading">Cargando proveedores…</div>
+      </div>
+    </div>
+
+    <div class="tab-panel" id="tab-gallery">
+      <div class="form-card">
+        <h2>Añadir imagen</h2>
+        <form id="galleryForm">
+          <div class="form-grid">
+            <div class="field">
+              <label for="gal-section">Sección de la web</label>
+              <select id="gal-section" required>
+                <option value="home">Portada</option>
+                <option value="sobre">Sobre mí</option>
+                <option value="proceso">Cómo trabajamos</option>
+                <option value="servicios">Bodas</option>
+                <option value="empresas">Empresas e instituciones</option>
+                <option value="colaboradores">Colaboradores</option>
+                <option value="contacto">Contacto</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="gal-file">Imagen</label>
+              <input type="file" id="gal-file" class="file-input" accept="image/*" required>
+            </div>
+            <div class="field" style="grid-column:1/-1;">
+              <label for="gal-caption">Descripción (opcional)</label>
+              <input type="text" id="gal-caption" placeholder="Se muestra debajo de la foto en la web">
+            </div>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn" id="galSubmitBtn">Subir imagen</button>
+            <p class="msg" id="galFormMsg" style="margin:0;"></p>
+          </div>
+        </form>
+      </div>
+
+      <div class="toolbar">
+        <select id="gallerySectionFilter">
+          <option value="todos">Todas las secciones</option>
+          <option value="home">Portada</option>
+          <option value="sobre">Sobre mí</option>
+          <option value="proceso">Cómo trabajamos</option>
+          <option value="servicios">Bodas</option>
+          <option value="empresas">Empresas e instituciones</option>
+          <option value="colaboradores">Colaboradores</option>
+          <option value="contacto">Contacto</option>
+        </select>
+        <span class="count" id="galleryCountLabel"></span>
+      </div>
+      <div id="galleryListArea" class="gallery-grid">
+        <div class="loading">Cargando imágenes…</div>
       </div>
     </div>
   </main>
@@ -379,6 +439,7 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.classList.add('active');
     document.getElementById(`tab-${btn.dataset.tab}`).classList.add('active');
     if (btn.dataset.tab === 'providers' && !providersLoaded) loadProviders();
+    if (btn.dataset.tab === 'gallery' && !galleryLoaded) loadGalleryImages();
   });
 });
 
@@ -531,6 +592,134 @@ providerListArea.addEventListener('click', async (e) => {
 });
 
 providerCategoryFilter.addEventListener('change', renderProviders);
+
+// ---- Galería ----
+const SECTION_LABELS = {
+  home: 'Portada',
+  sobre: 'Sobre mí',
+  proceso: 'Cómo trabajamos',
+  servicios: 'Bodas',
+  empresas: 'Empresas e instituciones',
+  colaboradores: 'Colaboradores',
+  contacto: 'Contacto',
+};
+const GALLERY_BUCKET = 'galeria-lienzo-blanco';
+
+const galleryForm = document.getElementById('galleryForm');
+const galFormMsg = document.getElementById('galFormMsg');
+const galSubmitBtn = document.getElementById('galSubmitBtn');
+const galleryListArea = document.getElementById('galleryListArea');
+const gallerySectionFilter = document.getElementById('gallerySectionFilter');
+const galleryCountLabel = document.getElementById('galleryCountLabel');
+
+let allGalleryImages = [];
+let galleryLoaded = false;
+
+function galleryPublicUrl(path){
+  return supabase.storage.from(GALLERY_BUCKET).getPublicUrl(path).data.publicUrl;
+}
+
+async function loadGalleryImages(){
+  galleryListArea.innerHTML = '<div class="loading">Cargando imágenes…</div>';
+  const { data, error } = await supabase
+    .from('gallery_images_lienzo_blanco')
+    .select('*')
+    .order('created_at', { ascending: false });
+  galleryLoaded = true;
+  if (error){
+    galleryListArea.innerHTML = `<div class="empty">Error al cargar: ${escapeHtml(error.message)}</div>`;
+    return;
+  }
+  allGalleryImages = data || [];
+  renderGalleryImages();
+}
+
+function renderGalleryImages(){
+  const filter = gallerySectionFilter.value;
+  const rows = filter === 'todos' ? allGalleryImages : allGalleryImages.filter(g => g.section === filter);
+  galleryCountLabel.textContent = `${rows.length} imagen${rows.length === 1 ? '' : 'es'}`;
+
+  if (!rows.length){
+    galleryListArea.innerHTML = '<div class="empty">No hay imágenes que mostrar.</div>';
+    return;
+  }
+
+  galleryListArea.innerHTML = rows.map(g => `
+    <div class="gallery-item" data-id="${g.id}" data-path="${escapeHtml(g.image_path)}">
+      <img src="${galleryPublicUrl(g.image_path)}" alt="${escapeHtml(g.caption || '')}" loading="lazy">
+      <div class="gallery-item-body">
+        <div class="gallery-item-section">${escapeHtml(SECTION_LABELS[g.section] || g.section)}</div>
+        <div class="gallery-item-caption">${g.caption ? escapeHtml(g.caption) : ''}</div>
+        <button class="btn danger small" data-action="delete">Eliminar</button>
+      </div>
+    </div>`).join('');
+}
+
+galleryForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  galFormMsg.textContent = '';
+  galFormMsg.className = 'msg';
+
+  const section = document.getElementById('gal-section').value;
+  const fileInput = document.getElementById('gal-file');
+  const file = fileInput.files[0];
+  const caption = document.getElementById('gal-caption').value.trim() || null;
+
+  if (!file){
+    galFormMsg.textContent = 'Selecciona una imagen.';
+    galFormMsg.className = 'msg err';
+    return;
+  }
+
+  galSubmitBtn.disabled = true;
+  galFormMsg.textContent = 'Subiendo…';
+
+  const safeName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, '_');
+  const path = `${section}/${Date.now()}-${safeName}`;
+
+  const { error: uploadError } = await supabase.storage.from(GALLERY_BUCKET).upload(path, file);
+  if (uploadError){
+    galFormMsg.textContent = 'No se pudo subir la imagen: ' + uploadError.message;
+    galFormMsg.className = 'msg err';
+    galSubmitBtn.disabled = false;
+    return;
+  }
+
+  const { error: insertError } = await supabase
+    .from('gallery_images_lienzo_blanco')
+    .insert([{ section, image_path: path, caption }]);
+
+  galSubmitBtn.disabled = false;
+
+  if (insertError){
+    galFormMsg.textContent = 'Imagen subida, pero no se pudo guardar en la base de datos: ' + insertError.message;
+    galFormMsg.className = 'msg err';
+    return;
+  }
+
+  galFormMsg.textContent = 'Imagen añadida correctamente.';
+  galFormMsg.className = 'msg ok';
+  galleryForm.reset();
+  await loadGalleryImages();
+});
+
+galleryListArea.addEventListener('click', async (e) => {
+  const btn = e.target.closest('button[data-action="delete"]');
+  if (!btn) return;
+  const item = e.target.closest('.gallery-item');
+  const id = item.dataset.id;
+  const path = item.dataset.path;
+
+  if (!confirm('¿Eliminar esta imagen? No se puede deshacer.')) return;
+  btn.disabled = true;
+
+  await supabase.storage.from(GALLERY_BUCKET).remove([path]);
+  const { error } = await supabase.from('gallery_images_lienzo_blanco').delete().eq('id', id);
+  if (error){ alert('No se pudo eliminar: ' + error.message); btn.disabled = false; return; }
+  await loadGalleryImages();
+});
+
+gallerySectionFilter.addEventListener('change', renderGalleryImages);
 
 loginForm.addEventListener('submit', async (e) => {
   e.preventDefault();
