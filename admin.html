@@ -24,6 +24,8 @@
   --sans:'Jost', Arial, sans-serif;
   --ok:#3E7A4F;
   --warn:#B3542A;
+  --event:#8C4B5C;
+  --event-pale:#E8D3D8;
 }
 *{box-sizing:border-box;}
 body{margin:0; font-family:var(--sans); color:var(--ink); background:var(--paper); font-weight:300;}
@@ -136,6 +138,21 @@ main{max-width:1100px; margin:0 auto; padding:28px;}
   font-size:0.65rem; line-height:1; min-width:16px; height:16px; border-radius:50%;
   display:flex; align-items:center; justify-content:center; padding:0 3px; font-weight:600;
 }
+.cal-day .day-badge.evt-badge{right:auto; left:4px; background:var(--event);}
+.cal-day.has-eventos{border-color:var(--event);}
+
+/* ---------- Eventos ---------- */
+.event-item{background:var(--paper-deep); border:1px solid var(--event-pale); border-left:4px solid var(--event); border-radius:6px; padding:16px 20px;}
+.event-item.realizado{opacity:0.6;}
+.event-item.cancelada{opacity:0.45; text-decoration:line-through;}
+.event-top{display:flex; flex-wrap:wrap; justify-content:space-between; gap:10px; margin-bottom:6px;}
+.event-client{font-size:1.15rem;}
+.event-type{font-size:0.72rem; letter-spacing:0.04em; text-transform:uppercase; color:var(--event);}
+.provider-picker{display:flex; flex-direction:column; gap:6px; max-height:160px; overflow-y:auto; border:1px solid var(--gold-pale); border-radius:4px; padding:10px 12px; background:var(--paper);}
+.provider-picker label{display:flex; align-items:center; gap:8px; font-size:0.88rem; text-transform:none; color:var(--ink); margin:0;}
+.provider-picker input{width:auto; flex:none;}
+.event-providers{font-size:0.85rem; color:var(--ink-soft); margin-top:6px;}
+.event-providers span{font-weight:500; color:var(--ink);}
 </style>
 </head>
 <body>
@@ -177,6 +194,7 @@ main{max-width:1100px; margin:0 auto; padding:28px;}
       <button class="tab-btn" data-tab="providers">Proveedores</button>
       <button class="tab-btn" data-tab="gallery">Galería</button>
       <button class="tab-btn" data-tab="agenda">Agenda</button>
+      <button class="tab-btn" data-tab="events">Eventos</button>
     </div>
 
     <div class="notif-banner" id="notifBanner" hidden>
@@ -380,6 +398,10 @@ main{max-width:1100px; margin:0 auto; padding:28px;}
         <h2 id="calLabel" style="font-size:1.15rem; text-transform:capitalize;"></h2>
         <button type="button" class="btn secondary small" id="calNextBtn">Mes siguiente →</button>
       </div>
+      <div style="display:flex; gap:18px; font-size:0.8rem; color:var(--ink-soft); margin-bottom:10px;">
+        <span><span style="display:inline-block; width:10px; height:10px; border-radius:50%; background:var(--gold-deep); margin-right:5px;"></span>Citas</span>
+        <span><span style="display:inline-block; width:10px; height:10px; border-radius:50%; background:var(--event); margin-right:5px;"></span>Eventos</span>
+      </div>
       <div class="cal-grid" id="calGrid"></div>
       <div id="calDayList" style="margin:24px 0 36px;"></div>
 
@@ -395,6 +417,83 @@ main{max-width:1100px; margin:0 auto; padding:28px;}
       </div>
       <div id="agendaListArea" class="cards">
         <div class="loading">Cargando agenda…</div>
+      </div>
+    </div>
+
+    <div class="tab-panel" id="tab-events">
+      <div class="form-card">
+        <h2 id="eventFormTitle">Añadir evento</h2>
+        <form id="eventForm">
+          <input type="hidden" id="event-id">
+          <div class="form-grid">
+            <div class="field">
+              <label for="event-client">Cliente</label>
+              <input type="text" id="event-client" required placeholder="Nombre del cliente / pareja / empresa">
+            </div>
+            <div class="field">
+              <label for="event-type">Tipo de evento</label>
+              <select id="event-type" required>
+                <option value="Boda">Boda</option>
+                <option value="Empresa / Institución">Empresa / Institución</option>
+                <option value="Comunión">Comunión</option>
+                <option value="Bautizo">Bautizo</option>
+                <option value="Otro">Otro</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="event-date">Fecha del evento</label>
+              <input type="date" id="event-date" required>
+            </div>
+            <div class="field">
+              <label for="event-time">Hora (opcional)</label>
+              <input type="time" id="event-time">
+            </div>
+            <div class="field">
+              <label for="event-guests">Nº de invitados (opcional)</label>
+              <input type="number" id="event-guests" min="0">
+            </div>
+            <div class="field">
+              <label for="event-status">Estado</label>
+              <select id="event-status">
+                <option value="confirmado">Confirmado</option>
+                <option value="realizado">Realizado</option>
+                <option value="cancelada">Cancelado</option>
+              </select>
+            </div>
+            <div class="field" style="grid-column:1/-1;">
+              <label>Proveedores que participan</label>
+              <div class="provider-picker" id="eventProviderPicker">
+                <div class="loading">Cargando proveedores…</div>
+              </div>
+            </div>
+            <div class="field" style="grid-column:1/-1;">
+              <label for="event-attendees">Personas que van a asistir (opcional)</label>
+              <textarea id="event-attendees" placeholder="Nombres de invitados destacados, padrinos, ponentes…"></textarea>
+            </div>
+            <div class="field" style="grid-column:1/-1;">
+              <label for="event-notes">Cosas de interés (opcional)</label>
+              <textarea id="event-notes" placeholder="Cualquier detalle a tener en cuenta: alergias, timings, peticiones especiales…"></textarea>
+            </div>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn" id="eventSubmitBtn">Guardar evento</button>
+            <button type="button" class="btn secondary" id="eventCancelBtn" style="display:none;">Cancelar edición</button>
+            <p class="msg" id="eventFormMsg" style="margin:0;"></p>
+          </div>
+        </form>
+      </div>
+
+      <div class="toolbar">
+        <select id="eventFilter">
+          <option value="proximos">Próximos eventos</option>
+          <option value="todos">Todos</option>
+          <option value="realizado">Realizados</option>
+          <option value="cancelada">Cancelados</option>
+        </select>
+        <span class="count" id="eventCountLabel"></span>
+      </div>
+      <div id="eventListArea" class="cards">
+        <div class="loading">Cargando eventos…</div>
       </div>
     </div>
   </main>
@@ -545,7 +644,14 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     document.getElementById(`tab-${btn.dataset.tab}`).classList.add('active');
     if (btn.dataset.tab === 'providers' && !providersLoaded) loadProviders();
     if (btn.dataset.tab === 'gallery' && !galleryLoaded) loadGalleryImages();
-    if (btn.dataset.tab === 'agenda' && !agendaLoaded) loadAgenda();
+    if (btn.dataset.tab === 'agenda'){
+      if (!agendaLoaded) loadAgenda();
+      if (!eventsLoaded) loadEvents();
+    }
+    if (btn.dataset.tab === 'events'){
+      renderProviderPicker();
+      if (!eventsLoaded) loadEvents();
+    }
   });
 });
 
@@ -575,6 +681,8 @@ async function loadProviders(){
   }
   allProviders = data || [];
   renderProviders();
+  renderProviderPicker();
+  renderEvents();
 }
 
 function renderProviders(){
@@ -975,6 +1083,7 @@ async function handleAgendaAction(e){
   const btn = e.target.closest('button[data-action]');
   if (!btn) return;
   const item = e.target.closest('.agenda-item');
+  if (!item) return;
   const id = item.dataset.id;
   const action = btn.dataset.action;
 
@@ -1018,10 +1127,15 @@ function ymd(y, m, d){
 function renderCalendarState(){
   calLabel.textContent = `${MONTH_NAMES[calState.month]} ${calState.year}`;
 
-  const byDate = {};
+  const byDateCitas = {};
   allAgenda.forEach(c => {
-    if (!byDate[c.event_date]) byDate[c.event_date] = [];
-    byDate[c.event_date].push(c);
+    if (!byDateCitas[c.event_date]) byDateCitas[c.event_date] = [];
+    byDateCitas[c.event_date].push(c);
+  });
+  const byDateEvents = {};
+  allEvents.forEach(ev => {
+    if (!byDateEvents[ev.event_date]) byDateEvents[ev.event_date] = [];
+    byDateEvents[ev.event_date].push(ev);
   });
 
   const first = new Date(calState.year, calState.month, 1);
@@ -1034,36 +1148,42 @@ function renderCalendarState(){
   for (let i = 0; i < startOffset; i++) html += `<div class="cal-day empty"></div>`;
   for (let day = 1; day <= daysInMonth; day++){
     const key = ymd(calState.year, calState.month, day);
-    const dayCitas = byDate[key] || [];
+    const dayCitas = byDateCitas[key] || [];
+    const dayEvents = byDateEvents[key] || [];
     const cls = ['cal-day'];
-    if (dayCitas.length) cls.push('clickable', 'has-citas');
+    if (dayCitas.length || dayEvents.length) cls.push('clickable');
+    if (dayCitas.length) cls.push('has-citas');
+    if (dayEvents.length) cls.push('has-eventos');
     if (key === today) cls.push('today');
     if (key === calState.selectedDate) cls.push('selected');
-    html += `<div class="${cls.join(' ')}" ${dayCitas.length ? `data-date="${key}"` : ''}>
+    html += `<div class="${cls.join(' ')}" ${(dayCitas.length || dayEvents.length) ? `data-date="${key}"` : ''}>
         <span class="daynum">${day}</span>
+        ${dayEvents.length ? `<span class="day-badge evt-badge">${dayEvents.length}</span>` : ''}
         ${dayCitas.length ? `<span class="day-badge">${dayCitas.length}</span>` : ''}
       </div>`;
   }
   calGrid.innerHTML = html;
   calGrid.querySelectorAll('[data-date]').forEach(el => {
-    el.addEventListener('click', () => showCalDay(el.dataset.date, byDate[el.dataset.date]));
+    el.addEventListener('click', () => showCalDay(el.dataset.date, byDateCitas[el.dataset.date] || [], byDateEvents[el.dataset.date] || []));
   });
 
-  if (calState.selectedDate && byDate[calState.selectedDate]){
-    showCalDay(calState.selectedDate, byDate[calState.selectedDate]);
+  if (calState.selectedDate && (byDateCitas[calState.selectedDate] || byDateEvents[calState.selectedDate])){
+    showCalDay(calState.selectedDate, byDateCitas[calState.selectedDate] || [], byDateEvents[calState.selectedDate] || []);
   } else if (calState.selectedDate){
     calState.selectedDate = null;
     calDayList.innerHTML = '';
   }
 }
 
-function showCalDay(dateStr, citas){
+function showCalDay(dateStr, citas, events){
   calState.selectedDate = dateStr;
   calDayList.innerHTML = `<div class="agenda-date-heading">${fmtDateHeading(dateStr)}</div>` +
+    events.map(renderEventItemHtml).join('') +
     citas.map(renderAgendaItemHtml).join('');
 }
 
 calDayList.addEventListener('click', handleAgendaAction);
+calDayList.addEventListener('click', handleEventAction);
 
 document.getElementById('calPrevBtn').addEventListener('click', () => {
   calState.month--;
@@ -1075,6 +1195,227 @@ document.getElementById('calNextBtn').addEventListener('click', () => {
   if (calState.month > 11){ calState.month = 0; calState.year++; }
   renderCalendarState();
 });
+
+// ---- Eventos ----
+const eventForm = document.getElementById('eventForm');
+const eventFormMsg = document.getElementById('eventFormMsg');
+const eventFormTitle = document.getElementById('eventFormTitle');
+const eventSubmitBtn = document.getElementById('eventSubmitBtn');
+const eventCancelBtn = document.getElementById('eventCancelBtn');
+const eventListArea = document.getElementById('eventListArea');
+const eventFilter = document.getElementById('eventFilter');
+const eventCountLabel = document.getElementById('eventCountLabel');
+const eventProviderPicker = document.getElementById('eventProviderPicker');
+
+let allEvents = [];
+let eventsLoaded = false;
+
+function providerNames(ids){
+  if (!ids || !ids.length) return '';
+  return ids.map(id => allProviders.find(p => p.id === id)?.name).filter(Boolean).join(', ');
+}
+
+function renderProviderPicker(selectedIds){
+  selectedIds = selectedIds || [];
+  if (!allProviders.length){
+    eventProviderPicker.innerHTML = providersLoaded
+      ? '<p style="margin:0; font-size:0.85rem; color:var(--ink-soft);">Todavía no has añadido proveedores en la pestaña Proveedores.</p>'
+      : '<div class="loading">Cargando proveedores…</div>';
+    return;
+  }
+  eventProviderPicker.innerHTML = allProviders.map(p => `
+    <label>
+      <input type="checkbox" value="${p.id}" ${selectedIds.includes(p.id) ? 'checked' : ''}>
+      ${escapeHtml(p.name)} <span style="color:var(--ink-soft);">— ${escapeHtml(p.category)}</span>
+    </label>`).join('');
+}
+
+async function loadEvents(){
+  eventListArea.innerHTML = '<div class="loading">Cargando eventos…</div>';
+  const { data, error } = await supabase
+    .from('eventos_lienzo_blanco')
+    .select('*, evento_proveedores_lienzo_blanco(proveedor_id)')
+    .order('event_date', { ascending: true })
+    .order('event_time', { ascending: true, nullsFirst: false });
+  eventsLoaded = true;
+  if (error){
+    eventListArea.innerHTML = `<div class="empty">Error al cargar: ${escapeHtml(error.message)}</div>`;
+    renderCalendarState();
+    return;
+  }
+  allEvents = (data || []).map(ev => ({
+    ...ev,
+    provider_ids: (ev.evento_proveedores_lienzo_blanco || []).map(x => x.proveedor_id),
+  }));
+  renderEvents();
+  renderCalendarState();
+}
+
+function renderEvents(){
+  const filter = eventFilter.value;
+  const today = todayIso();
+  let rows = allEvents;
+  if (filter === 'proximos') rows = allEvents.filter(ev => ev.status === 'confirmado' && ev.event_date >= today);
+  else if (filter === 'realizado') rows = allEvents.filter(ev => ev.status === 'realizado');
+  else if (filter === 'cancelada') rows = allEvents.filter(ev => ev.status === 'cancelada');
+
+  eventCountLabel.textContent = `${rows.length} evento${rows.length === 1 ? '' : 's'}`;
+
+  if (!rows.length){
+    eventListArea.innerHTML = '<div class="empty">No hay eventos que mostrar.</div>';
+    return;
+  }
+
+  let html = '';
+  let lastDate = null;
+  for (const ev of rows){
+    if (ev.event_date !== lastDate){
+      html += `<div class="agenda-date-heading">${fmtDateHeading(ev.event_date)}</div>`;
+      lastDate = ev.event_date;
+    }
+    html += renderEventItemHtml(ev);
+  }
+  eventListArea.innerHTML = html;
+}
+
+function renderEventItemHtml(ev){
+  const provNames = providerNames(ev.provider_ids);
+  return `
+    <div class="event-item ${ev.status}" data-id="${ev.id}">
+      <div class="event-top">
+        <div>
+          <div class="event-client">${escapeHtml(ev.client_name)}</div>
+          <div class="event-type">${escapeHtml(ev.event_type)}</div>
+        </div>
+        <div class="card-date">${ev.event_date}${ev.event_time ? ' · ' + ev.event_time.slice(0,5) : ''}</div>
+      </div>
+      <div class="card-grid" style="margin-top:8px;">
+        <div><span>Invitados</span>${ev.guests_count ?? '—'}</div>
+        <div><span>Estado</span>${ev.status}</div>
+      </div>
+      ${provNames ? `<div class="event-providers"><span>Proveedores:</span> ${escapeHtml(provNames)}</div>` : ''}
+      ${ev.attendees ? `<div class="card-message">${escapeHtml(ev.attendees)}</div>` : ''}
+      ${ev.notes ? `<div class="card-message">${escapeHtml(ev.notes)}</div>` : ''}
+      <div class="card-actions" style="margin-top:10px;">
+        <button class="btn secondary small" data-action="edit">Editar</button>
+        ${ev.status !== 'realizado' ? `<button class="btn secondary small" data-action="status" data-status="realizado">Marcar realizado</button>` : ''}
+        ${ev.status !== 'confirmado' ? `<button class="btn secondary small" data-action="status" data-status="confirmado">Marcar confirmado</button>` : ''}
+        ${ev.status !== 'cancelada' ? `<button class="btn secondary small" data-action="status" data-status="cancelada">Cancelar</button>` : ''}
+        <button class="btn danger small" data-action="delete">Eliminar</button>
+      </div>
+    </div>`;
+}
+
+function fillEventForm(ev){
+  document.getElementById('event-id').value = ev.id;
+  document.getElementById('event-client').value = ev.client_name || '';
+  document.getElementById('event-type').value = ev.event_type || 'Boda';
+  document.getElementById('event-date').value = ev.event_date || '';
+  document.getElementById('event-time').value = ev.event_time ? ev.event_time.slice(0,5) : '';
+  document.getElementById('event-guests').value = ev.guests_count ?? '';
+  document.getElementById('event-status').value = ev.status || 'confirmado';
+  document.getElementById('event-attendees').value = ev.attendees || '';
+  document.getElementById('event-notes').value = ev.notes || '';
+  renderProviderPicker(ev.provider_ids || []);
+  eventFormTitle.textContent = `Editar evento — ${ev.client_name}`;
+  eventSubmitBtn.textContent = 'Guardar cambios';
+  eventCancelBtn.style.display = 'inline-block';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function resetEventForm(){
+  eventForm.reset();
+  document.getElementById('event-id').value = '';
+  renderProviderPicker([]);
+  eventFormTitle.textContent = 'Añadir evento';
+  eventSubmitBtn.textContent = 'Guardar evento';
+  eventCancelBtn.style.display = 'none';
+}
+
+eventCancelBtn.addEventListener('click', resetEventForm);
+
+eventForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  eventFormMsg.textContent = '';
+  eventFormMsg.className = 'msg';
+
+  const id = document.getElementById('event-id').value;
+  const selectedProviderIds = Array.from(eventProviderPicker.querySelectorAll('input:checked')).map(cb => cb.value);
+  const payload = {
+    client_name: document.getElementById('event-client').value.trim(),
+    event_type: document.getElementById('event-type').value,
+    event_date: document.getElementById('event-date').value,
+    event_time: document.getElementById('event-time').value || null,
+    guests_count: document.getElementById('event-guests').value ? Number(document.getElementById('event-guests').value) : null,
+    status: document.getElementById('event-status').value,
+    attendees: document.getElementById('event-attendees').value.trim() || null,
+    notes: document.getElementById('event-notes').value.trim() || null,
+  };
+
+  eventSubmitBtn.disabled = true;
+  let eventId = id;
+  let error;
+  if (id){
+    ({ error } = await supabase.from('eventos_lienzo_blanco').update(payload).eq('id', id));
+  } else {
+    const res = await supabase.from('eventos_lienzo_blanco').insert([payload]).select('id').single();
+    error = res.error;
+    eventId = res.data?.id;
+  }
+
+  if (!error && eventId){
+    await supabase.from('evento_proveedores_lienzo_blanco').delete().eq('evento_id', eventId);
+    if (selectedProviderIds.length){
+      const links = selectedProviderIds.map(proveedor_id => ({ evento_id: eventId, proveedor_id }));
+      ({ error } = await supabase.from('evento_proveedores_lienzo_blanco').insert(links));
+    }
+  }
+
+  eventSubmitBtn.disabled = false;
+
+  if (error){
+    eventFormMsg.textContent = 'No se pudo guardar: ' + error.message;
+    eventFormMsg.className = 'msg err';
+    return;
+  }
+  eventFormMsg.textContent = 'Guardado correctamente.';
+  eventFormMsg.className = 'msg ok';
+  resetEventForm();
+  await loadEvents();
+});
+
+async function handleEventAction(e){
+  const btn = e.target.closest('button[data-action]');
+  if (!btn) return;
+  const item = e.target.closest('.event-item');
+  if (!item) return;
+  const id = item.dataset.id;
+  const action = btn.dataset.action;
+
+  if (action === 'edit'){
+    const ev = allEvents.find(x => x.id === id);
+    if (ev) fillEventForm(ev);
+  }
+
+  if (action === 'status'){
+    const status = btn.dataset.status;
+    btn.disabled = true;
+    const { error } = await supabase.from('eventos_lienzo_blanco').update({ status }).eq('id', id);
+    if (error){ alert('No se pudo actualizar: ' + error.message); btn.disabled = false; return; }
+    await loadEvents();
+  }
+
+  if (action === 'delete'){
+    if (!confirm('¿Eliminar este evento? No se puede deshacer.')) return;
+    btn.disabled = true;
+    const { error } = await supabase.from('eventos_lienzo_blanco').delete().eq('id', id);
+    if (error){ alert('No se pudo eliminar: ' + error.message); btn.disabled = false; return; }
+    await loadEvents();
+  }
+}
+
+eventListArea.addEventListener('click', handleEventAction);
+eventFilter.addEventListener('change', renderEvents);
 
 // ---- Notificaciones push (agenda diaria a las 8:00) ----
 const VAPID_PUBLIC_KEY = 'BI2DB0JYsl3IMvs-P7LxCKa5K1niBnsxzC0_vn3DCogMIb7DeTaNVsq54k-jWZTReIHPeaaL9pfvlSpl1J0TDcQ';
@@ -1174,6 +1515,7 @@ async function showApp(session){
   appScreen.style.display = 'block';
   whoami.textContent = session.user.email;
   await loadQuotes();
+  loadProviders();
   await checkNotifBanner();
 }
 
