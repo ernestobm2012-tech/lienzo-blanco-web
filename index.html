@@ -75,9 +75,12 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
 /* ============ NAV ============ */
 header.site{
   position:sticky; top:0; z-index:100;
+  border-bottom:1px solid var(--line);
+}
+header.site::before{
+  content:''; position:absolute; inset:0; z-index:-1;
   background:rgba(251,248,242,0.92);
   backdrop-filter:blur(8px);
-  border-bottom:1px solid var(--line);
 }
 .nav{
   display:flex; align-items:center; justify-content:space-between;
@@ -328,12 +331,14 @@ footer{
   padding-top:22px; font-size:0.8rem; color:rgba(251,248,242,0.5);
 }
 .wa-float{
-  position:fixed; bottom:24px; right:24px; z-index:90;
+  position:fixed; bottom:24px; right:24px; z-index:9999;
   background:#25D366; width:56px; height:56px; border-radius:50%;
   display:flex; align-items:center; justify-content:center;
   box-shadow:0 8px 22px rgba(0,0,0,0.22); transition:transform 0.3s ease;
+  transform:translateZ(0); -webkit-transform:translateZ(0); will-change:transform;
+  backface-visibility:hidden;
 }
-.wa-float:hover{transform:scale(1.08);}
+.wa-float:hover{transform:translateZ(0) scale(1.08);}
 .wa-float svg{width:28px; height:28px; fill:#fff;}
 
 /* reveal on scroll */
