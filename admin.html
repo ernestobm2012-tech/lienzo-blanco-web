@@ -76,8 +76,8 @@ main{max-width:1100px; margin:0 auto; padding:28px;}
 .empty{text-align:center; padding:60px 20px; color:var(--ink-soft);}
 .loading{text-align:center; padding:60px 20px; color:var(--ink-soft);}
 
-.tabs{display:flex; gap:8px; margin-bottom:22px; border-bottom:1px solid var(--gold-pale);}
-.tab-btn{background:none; border:none; font-family:var(--sans); font-size:0.95rem; color:var(--ink-soft); padding:10px 4px; cursor:pointer; border-bottom:2px solid transparent; margin-right:18px;}
+.tabs{display:flex; gap:8px; margin-bottom:22px; border-bottom:1px solid var(--gold-pale); overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:thin;}
+.tab-btn{background:none; border:none; font-family:var(--sans); font-size:0.95rem; color:var(--ink-soft); padding:10px 4px; cursor:pointer; border-bottom:2px solid transparent; margin-right:18px; white-space:nowrap; flex-shrink:0;}
 .tab-btn.active{color:var(--ink); border-bottom-color:var(--gold-deep);}
 .tab-panel{display:none;}
 .tab-panel.active{display:block;}
@@ -1463,9 +1463,13 @@ enableNotifBtn.addEventListener('click', async () => {
     notifMsg.textContent = 'No se ha podido activar: el navegador no admite notificaciones aquí.';
     return;
   }
+  if (Notification.permission === 'denied'){
+    notifMsg.textContent = 'Las notificaciones están bloqueadas para esta web en tu navegador. Para activarlas: toca los tres puntos o el candado junto a la dirección → Información del sitio / Permisos → Notificaciones → Permitir. Después vuelve a esta página y pulsa "Activar notificaciones".';
+    return;
+  }
   const permission = await Notification.requestPermission();
   if (permission !== 'granted'){
-    notifMsg.textContent = 'No se han activado las notificaciones.';
+    notifMsg.textContent = 'No se han activado las notificaciones: se cerró el aviso sin permitirlas. Vuelve a pulsar "Activar notificaciones" y elige "Permitir" en el aviso del navegador.';
     return;
   }
   try {
