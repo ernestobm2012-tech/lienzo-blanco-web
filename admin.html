@@ -115,6 +115,27 @@ main{max-width:1100px; margin:0 auto; padding:28px;}
 .agenda-date-heading:first-child{margin-top:0;}
 .notif-banner{display:flex; flex-wrap:wrap; align-items:center; gap:12px; background:var(--paper-deep); border:1px solid var(--gold-pale); border-radius:6px; padding:14px 18px; margin-bottom:22px;}
 .notif-banner p{margin:0; font-size:0.88rem; color:var(--ink-soft); flex:1; min-width:200px;}
+
+/* ---------- Calendario de agenda ---------- */
+.cal-nav{display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; gap:12px;}
+.cal-grid{display:grid; grid-template-columns:repeat(7,1fr); gap:6px; margin-bottom:8px;}
+.cal-grid .dow{font-size:0.68rem; letter-spacing:0.04em; text-transform:uppercase; color:var(--ink-soft); text-align:center; padding-bottom:4px;}
+.cal-day{
+  position:relative; background:var(--paper); border:1px solid var(--gold-pale); min-height:56px; padding:6px;
+  font-size:0.8rem; display:flex; flex-direction:column; cursor:default;
+}
+.cal-day.empty{background:none; border:none;}
+.cal-day.clickable{cursor:pointer;}
+.cal-day.clickable:hover{background:var(--gold-pale);}
+.cal-day.has-citas{background:var(--paper-deep); border-color:var(--gold);}
+.cal-day.selected{outline:2px solid var(--gold-deep); outline-offset:-2px;}
+.cal-day.today .daynum{text-decoration:underline; text-decoration-color:var(--gold-deep);}
+.cal-day .daynum{font-weight:500;}
+.cal-day .day-badge{
+  position:absolute; top:4px; right:4px; background:var(--gold-deep); color:var(--paper);
+  font-size:0.65rem; line-height:1; min-width:16px; height:16px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center; padding:0 3px; font-weight:600;
+}
 </style>
 </head>
 <body>
@@ -354,6 +375,15 @@ main{max-width:1100px; margin:0 auto; padding:28px;}
         </form>
       </div>
 
+      <div class="cal-nav">
+        <button type="button" class="btn secondary small" id="calPrevBtn">← Mes anterior</button>
+        <h2 id="calLabel" style="font-size:1.15rem; text-transform:capitalize;"></h2>
+        <button type="button" class="btn secondary small" id="calNextBtn">Mes siguiente →</button>
+      </div>
+      <div class="cal-grid" id="calGrid"></div>
+      <div id="calDayList" style="margin:24px 0 36px;"></div>
+
+      <h2 style="font-size:1.1rem; margin-bottom:14px;">Todas las citas</h2>
       <div class="toolbar">
         <select id="agendaFilter">
           <option value="proximas">Próximas citas</option>
@@ -836,6 +866,7 @@ async function loadAgenda(){
   }
   allAgenda = data || [];
   renderAgenda();
+  renderCalendarState();
 }
 
 function renderAgenda(){
@@ -860,7 +891,13 @@ function renderAgenda(){
       html += `<div class="agenda-date-heading">${fmtDateHeading(c.event_date)}</div>`;
       lastDate = c.event_date;
     }
-    html += `
+    html += renderAgendaItemHtml(c);
+  }
+  agendaListArea.innerHTML = html;
+}
+
+function renderAgendaItemHtml(c){
+  return `
       <div class="agenda-item ${c.status}" data-id="${c.id}">
         <div class="agenda-time">${c.event_time ? c.event_time.slice(0,5) : '—'}</div>
         <div class="agenda-body">
@@ -876,8 +913,6 @@ function renderAgenda(){
           <button class="btn danger small" data-action="delete">Eliminar</button>
         </div>
       </div>`;
-  }
-  agendaListArea.innerHTML = html;
 }
 
 function fillAgendaForm(c){
@@ -936,7 +971,7 @@ agendaForm.addEventListener('submit', async (e) => {
   await loadAgenda();
 });
 
-agendaListArea.addEventListener('click', async (e) => {
+async function handleAgendaAction(e){
   const btn = e.target.closest('button[data-action]');
   if (!btn) return;
   const item = e.target.closest('.agenda-item');
@@ -963,9 +998,83 @@ agendaListArea.addEventListener('click', async (e) => {
     if (error){ alert('No se pudo eliminar: ' + error.message); btn.disabled = false; return; }
     await loadAgenda();
   }
-});
+}
 
+agendaListArea.addEventListener('click', handleAgendaAction);
 agendaFilter.addEventListener('change', renderAgenda);
+
+// ---- Calendario de la agenda ----
+const MONTH_NAMES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+const DOWS = ['L','M','X','J','V','S','D'];
+const calGrid = document.getElementById('calGrid');
+const calLabel = document.getElementById('calLabel');
+const calDayList = document.getElementById('calDayList');
+const calState = { year: new Date().getFullYear(), month: new Date().getMonth(), selectedDate: null };
+
+function ymd(y, m, d){
+  return `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+}
+
+function renderCalendarState(){
+  calLabel.textContent = `${MONTH_NAMES[calState.month]} ${calState.year}`;
+
+  const byDate = {};
+  allAgenda.forEach(c => {
+    if (!byDate[c.event_date]) byDate[c.event_date] = [];
+    byDate[c.event_date].push(c);
+  });
+
+  const first = new Date(calState.year, calState.month, 1);
+  const startOffset = (first.getDay() + 6) % 7;
+  const daysInMonth = new Date(calState.year, calState.month + 1, 0).getDate();
+  const today = todayIso();
+
+  let html = '';
+  DOWS.forEach(d => html += `<div class="dow">${d}</div>`);
+  for (let i = 0; i < startOffset; i++) html += `<div class="cal-day empty"></div>`;
+  for (let day = 1; day <= daysInMonth; day++){
+    const key = ymd(calState.year, calState.month, day);
+    const dayCitas = byDate[key] || [];
+    const cls = ['cal-day'];
+    if (dayCitas.length) cls.push('clickable', 'has-citas');
+    if (key === today) cls.push('today');
+    if (key === calState.selectedDate) cls.push('selected');
+    html += `<div class="${cls.join(' ')}" ${dayCitas.length ? `data-date="${key}"` : ''}>
+        <span class="daynum">${day}</span>
+        ${dayCitas.length ? `<span class="day-badge">${dayCitas.length}</span>` : ''}
+      </div>`;
+  }
+  calGrid.innerHTML = html;
+  calGrid.querySelectorAll('[data-date]').forEach(el => {
+    el.addEventListener('click', () => showCalDay(el.dataset.date, byDate[el.dataset.date]));
+  });
+
+  if (calState.selectedDate && byDate[calState.selectedDate]){
+    showCalDay(calState.selectedDate, byDate[calState.selectedDate]);
+  } else if (calState.selectedDate){
+    calState.selectedDate = null;
+    calDayList.innerHTML = '';
+  }
+}
+
+function showCalDay(dateStr, citas){
+  calState.selectedDate = dateStr;
+  calDayList.innerHTML = `<div class="agenda-date-heading">${fmtDateHeading(dateStr)}</div>` +
+    citas.map(renderAgendaItemHtml).join('');
+}
+
+calDayList.addEventListener('click', handleAgendaAction);
+
+document.getElementById('calPrevBtn').addEventListener('click', () => {
+  calState.month--;
+  if (calState.month < 0){ calState.month = 11; calState.year--; }
+  renderCalendarState();
+});
+document.getElementById('calNextBtn').addEventListener('click', () => {
+  calState.month++;
+  if (calState.month > 11){ calState.month = 0; calState.year++; }
+  renderCalendarState();
+});
 
 // ---- Notificaciones push (agenda diaria a las 8:00) ----
 const VAPID_PUBLIC_KEY = 'BI2DB0JYsl3IMvs-P7LxCKa5K1niBnsxzC0_vn3DCogMIb7DeTaNVsq54k-jWZTReIHPeaaL9pfvlSpl1J0TDcQ';
