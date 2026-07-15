@@ -153,6 +153,16 @@ main{max-width:1100px; margin:0 auto; padding:28px;}
 .provider-picker input{width:auto; flex:none;}
 .event-providers{font-size:0.85rem; color:var(--ink-soft); margin-top:6px;}
 .event-providers span{font-weight:500; color:var(--ink);}
+
+/* ---------- Estadísticas ---------- */
+.stats-row{display:flex; flex-wrap:wrap; gap:14px; margin-bottom:24px;}
+.stat-card{flex:1; min-width:160px; background:var(--paper-deep); border:1px solid var(--gold-pale); border-radius:6px; padding:18px 20px; text-align:center;}
+.stat-card .num{display:block; font-family:var(--serif); font-size:1.8rem; color:var(--ink);}
+.stat-card .lbl{display:block; font-size:0.75rem; letter-spacing:0.04em; text-transform:uppercase; color:var(--ink-soft); margin-top:4px;}
+.stats-table{width:100%; border-collapse:collapse;}
+.stats-table th, .stats-table td{text-align:left; padding:10px 14px; border-bottom:1px solid var(--gold-pale); font-size:0.9rem;}
+.stats-table th{font-size:0.72rem; letter-spacing:0.04em; text-transform:uppercase; color:var(--ink-soft); font-weight:500;}
+.stats-table td:first-child{text-transform:capitalize;}
 </style>
 </head>
 <body>
@@ -195,6 +205,7 @@ main{max-width:1100px; margin:0 auto; padding:28px;}
       <button class="tab-btn" data-tab="gallery">Galería</button>
       <button class="tab-btn" data-tab="agenda">Agenda</button>
       <button class="tab-btn" data-tab="events">Eventos</button>
+      <button class="tab-btn" data-tab="stats">Estadísticas</button>
     </div>
 
     <div class="notif-banner" id="notifBanner" hidden>
@@ -496,6 +507,29 @@ main{max-width:1100px; margin:0 auto; padding:28px;}
         <div class="loading">Cargando eventos…</div>
       </div>
     </div>
+
+    <div class="tab-panel" id="tab-stats">
+      <p style="color:var(--ink-soft); font-size:0.9rem; margin-bottom:18px;">"Visitas" cuenta cada carga de la página principal; "Visitantes únicos" cuenta dispositivos distintos (si alguien recarga o vuelve a entrar, no suma otra vez). No cuenta el panel de admin.</p>
+      <div class="stats-row">
+        <div class="stat-card">
+          <span class="num" id="visitsTotal">0</span>
+          <span class="lbl">Visitas totales</span>
+        </div>
+        <div class="stat-card">
+          <span class="num" id="visitsUniqueTotal">0</span>
+          <span class="lbl">Visitantes únicos totales</span>
+        </div>
+        <div class="stat-card">
+          <span class="num" id="visitsMonth">0</span>
+          <span class="lbl">Visitas este mes</span>
+        </div>
+        <div class="stat-card">
+          <span class="num" id="visitsUniqueMonth">0</span>
+          <span class="lbl">Visitantes únicos este mes</span>
+        </div>
+      </div>
+      <table class="stats-table" id="visitsMonthsTable"></table>
+    </div>
   </main>
 </div>
 
@@ -652,6 +686,7 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
       renderProviderPicker();
       if (!eventsLoaded) loadEvents();
     }
+    if (btn.dataset.tab === 'stats' && !visitsLoaded) loadVisits();
   });
 });
 
@@ -1416,6 +1451,49 @@ async function handleEventAction(e){
 
 eventListArea.addEventListener('click', handleEventAction);
 eventFilter.addEventListener('change', renderEvents);
+
+// ---- Estadísticas (visitas a la web) ----
+let visitsLoaded = false;
+function ymdStats(d){
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+}
+async function loadVisits(){
+  visitsLoaded = true;
+  const { data, error } = await supabase.from('page_views_lienzo_blanco').select('visited_at, visitor_id');
+  const visits = error ? [] : (data || []);
+
+  document.getElementById('visitsTotal').textContent = visits.length;
+  document.getElementById('visitsUniqueTotal').textContent = new Set(visits.map(v => v.visitor_id).filter(Boolean)).size;
+
+  const byMonth = {};
+  visits.forEach(v => {
+    const key = (v.visited_at || '').slice(0, 7);
+    if (!key) return;
+    if (!byMonth[key]) byMonth[key] = { count: 0, visitors: new Set() };
+    byMonth[key].count += 1;
+    if (v.visitor_id) byMonth[key].visitors.add(v.visitor_id);
+  });
+  const months = Object.keys(byMonth).sort().reverse();
+  const currentMonthKey = ymdStats(new Date());
+  const currentInfo = byMonth[currentMonthKey];
+  document.getElementById('visitsMonth').textContent = currentInfo ? currentInfo.count : 0;
+  document.getElementById('visitsUniqueMonth').textContent = currentInfo ? currentInfo.visitors.size : 0;
+
+  const table = document.getElementById('visitsMonthsTable');
+  if (!months.length){
+    table.innerHTML = '<tr><td>Todavía no hay visitas registradas.</td></tr>';
+    return;
+  }
+  table.innerHTML = `
+    <thead><tr><th>Mes</th><th>Visitas</th><th>Visitantes únicos</th></tr></thead>
+    <tbody>
+      ${months.map(m => {
+        const label = new Date(m + '-01T00:00:00').toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
+        return `<tr><td>${label}</td><td>${byMonth[m].count}</td><td>${byMonth[m].visitors.size}</td></tr>`;
+      }).join('')}
+    </tbody>
+  `;
+}
 
 // ---- Notificaciones push (agenda diaria a las 8:00) ----
 const VAPID_PUBLIC_KEY = 'BI2DB0JYsl3IMvs-P7LxCKa5K1niBnsxzC0_vn3DCogMIb7DeTaNVsq54k-jWZTReIHPeaaL9pfvlSpl1J0TDcQ';

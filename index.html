@@ -1040,5 +1040,20 @@ form.addEventListener('submit', async (e) => {
   });
 })();
 </script>
+
+<script>
+/* ============ VISITAS A LA WEB (estadísticas del admin) ============ */
+(function(){
+  if (!window.supabase) return;
+  const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  const KEY = 'lb_visitor_id';
+  let visitorId = localStorage.getItem(KEY);
+  if (!visitorId){
+    visitorId = (crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`);
+    localStorage.setItem(KEY, visitorId);
+  }
+  sb.from('page_views_lienzo_blanco').insert({ visitor_id: visitorId }).then(() => {});
+})();
+</script>
 </body>
 </html>
